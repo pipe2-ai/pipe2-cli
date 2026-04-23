@@ -1,0 +1,90 @@
+# goreleaser config for the pipe2 CLI.
+#
+# Runs inside the pipe2-ai/pipe2-cli mirror repo (populated by
+# .github/workflows/publish-pipe2-cli.yml on each cli-v* tag push).
+# Produces:
+#   • Cross-compiled binaries for macOS + Linux on amd64 + arm64
+#   • GitHub Releases on pipe2-ai/pipe2-cli with tarballs + checksums
+#   • A Homebrew formula pushed to pipe2-ai/homebrew-tap so users can
+#     `brew install pipe2-ai/tap/pipe2`
+#
+# Local sanity check: `goreleaser release --snapshot --clean` — skips
+# publish steps, just builds into ./dist/.
+version: 2
+
+project_name: pipe2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: pipe2
+    main: ./cmd/pipe2
+    binary: pipe2
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      # -s -w strips DWARF + symbol table (~30% smaller binary).
+      # Version + commit injected so `pipe2 --version` has real info.
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}}
+
+archives:
+  - id: default
+    formats: ["tar.gz"]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{ end }}
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+      - "^test:"
+      - "^ci:"
+
+release:
+  github:
+    owner: pipe2-ai
+    name: pipe2-cli
+  # Goreleaser will auto-generate release notes from commit messages
+  # between the previous tag and the current one.
+  draft: false
+  prerelease: auto
+
+# Homebrew — use `homebrew_casks` (goreleaser v2 unified the section).
+# CLI-binary cask: the tap publishes to Formula/ for the classic
+# `brew install pipe2-ai/tap/pipe2` install path (no --cask needed).
+homebrew_casks:
+  - name: pipe2
+    repository:
+      owner: pipe2-ai
+      name: homebrew-tap
+      branch: main
+      # Separate PAT (not the default GITHUB_TOKEN) so goreleaser can
+      # push to the tap repo, which lives outside the CLI repo's scope.
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://pipe2.ai"
+    description: "Pipe2.ai CLI — agent-native command line for pipelines, runs, assets, and credits."
+    commit_author:
+      name: pipe2-ai CI
+      email: ci@pipe2.ai
+    # Drop macOS's quarantine xattr so Gatekeeper doesn't block first
+    # invocation on the downloaded binary.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system "/usr/bin/xattr", "-dr", "com.apple.quarantine", "#{staged_path}/pipe2"
+          end

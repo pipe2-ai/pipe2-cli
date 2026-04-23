@@ -1,0 +1,25 @@
+{
+  "$schema": "https://code.claude.com/schemas/plugin-marketplace.json",
+  "name": "pipe2-ai",
+  "description": "Official Pipe2.ai plugins for Claude Code, Codex CLI, and ChatGPT agents. Ships the pipe2 CLI skill so agents can dispatch pipelines, inspect runs, and manage assets directly against the Pipe2.ai API.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Pipe2.ai",
+    "url": "https://pipe2.ai"
+  },
+  "homepage": "https://pipe2.ai/docs/cli",
+  "repository": "https://github.com/pipe2-ai/pipe2-cli",
+  "plugins": [
+    {
+      "name": "pipe2-cli",
+      "description": "Pipe2.ai command-line tool and agent SDK. Use when listing or dispatching pipelines, inspecting runs, managing assets, or checking credits from an AI agent.",
+      "version": "0.1.0",
+      "homepage": "https://pipe2.ai/docs/cli",
+      "skills": [
+        {
+          "path": ".claude/skills/pipe2-cli/SKILL.md"
+        }
+      ]
+    }
+  ]
+}
