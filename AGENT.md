@@ -110,9 +110,21 @@ pipe2 runs wait $RUN_ID --timeout 5m --json
 ### Manage assets
 
 ```bash
+pipe2 assets upload ./local-video.mp4 --tags raw --json
 pipe2 assets list --json
 pipe2 assets delete $ASSET_ID --json
 ```
+
+`upload` registers a local file (image / video / audio) as an asset and
+returns its `id` and public `url`, both of which any pipeline accepts as
+input. Size limits: 10 MiB images, 5 GiB videos, 1 GiB audio.
+
+Files at or below 25 MiB use a single PUT; larger files automatically
+switch to S3 multipart with parallel chunked uploads. Tune the multipart
+path with `--parallel <N>` (concurrent part PUTs, default 4) and
+`--part-size <MiB>` (chunk size, default 32 MiB). Ctrl-C aborts the
+in-progress upload cleanly. Use `--content-type <mime>` to override
+extension-based detection.
 
 ### Credits
 
@@ -146,7 +158,7 @@ pipe2 help                           # human-readable
 
 ## Command reference
 
-- [`pipe2 assets`](#pipe2-assets) — Inspect and delete generated assets
+- [`pipe2 assets`](#pipe2-assets) — Upload, inspect, and delete assets
 - [`pipe2 auth`](#pipe2-auth) — Manage Pipe2.ai authentication
 - [`pipe2 credits`](#pipe2-credits) — Credit balance and history
 - [`pipe2 pipelines`](#pipe2-pipelines) — List and run Pipe2.ai pipelines
@@ -158,7 +170,7 @@ pipe2 help                           # human-readable
 
 <!-- anchor: pipe2-assets -->
 
-Inspect and delete generated assets
+Upload, inspect, and delete assets
 
 ```
 pipe2 pipe2 assets
@@ -183,6 +195,41 @@ List your assets
 ```
 pipe2 assets pipe2 assets list
 ```
+
+### `pipe2 assets upload`
+
+<!-- anchor: pipe2-assets-upload -->
+
+Upload a local file as an asset (image/video/audio)
+
+Upload a local file and register it as an asset in your library.
+
+The asset is stored in Pipe2.ai's S3 bucket and gets a public URL you can
+pass to any pipeline (e.g. video-trim, transcription, captions) via either
+the asset's id or its url field.
+
+Files at or below 25 MiB use a single PUT. Larger files automatically use
+S3 multipart with parallel chunked PUTs (--parallel chunks at a time, each
+--part-size MiB). On Ctrl-C the in-progress upload is aborted cleanly.
+
+Size limits: 10 MiB images, 5 GiB videos, 1 GiB audio.
+
+Examples:
+  pipe2 assets upload ./interview.mp4
+  pipe2 assets upload ./voiceover.wav --tags podcast,episode-42
+  pipe2 assets upload ./long-podcast.mp4 --parallel 8 --part-size 64
+  pipe2 assets upload ./photo --content-type image/jpeg
+
+```
+pipe2 assets pipe2 assets upload <file> [flags]
+```
+
+**Flags:**
+
+- `--content-type` (`string`) — explicit MIME type (default: detected from extension)
+- `--parallel` (`int`) default `0` — concurrent part uploads in multipart mode (default 4)
+- `--part-size` (`int64`) default `0` — multipart chunk size in MiB (default 32, min 5)
+- `--tags` (`stringSlice`) default `[]` — comma-separated tags to attach to the asset
 
 ### `pipe2 auth`
 

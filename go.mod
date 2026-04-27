@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/Khan/genqlient v0.8.1
-	github.com/pipe2-ai/sdk-go v0.1.2
+	github.com/pipe2-ai/sdk-go v0.2.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 )

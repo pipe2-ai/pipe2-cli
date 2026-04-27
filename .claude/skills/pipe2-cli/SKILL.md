@@ -107,9 +107,21 @@ pipe2 runs wait $RUN_ID --timeout 5m --json
 ### Manage assets
 
 ```bash
+pipe2 assets upload ./local-video.mp4 --tags raw --json
 pipe2 assets list --json
 pipe2 assets delete $ASSET_ID --json
 ```
+
+`upload` registers a local file (image / video / audio) as an asset and
+returns its `id` and public `url`, both of which any pipeline accepts as
+input. Size limits: 10 MiB images, 5 GiB videos, 1 GiB audio.
+
+Files at or below 25 MiB use a single PUT; larger files automatically
+switch to S3 multipart with parallel chunked uploads. Tune the multipart
+path with `--parallel <N>` (concurrent part PUTs, default 4) and
+`--part-size <MiB>` (chunk size, default 32 MiB). Ctrl-C aborts the
+in-progress upload cleanly. Use `--content-type <mime>` to override
+extension-based detection.
 
 ### Credits
 
