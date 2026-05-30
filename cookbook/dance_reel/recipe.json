@@ -1,0 +1,172 @@
+{
+  "agent_prompt": "Run the pipe2 dance-reel recipe via the pipe2 CLI. Defaults produce a K-pop breakdancer reel with a vocal-led Eleven Music bed — pass --subject, --style, --moves, --music to customize, or --persona / --watermark-url for branded output. Report the final video URL when done.",
+  "audience": [
+    "creator",
+    "agency editor",
+    "AI agent",
+    "marketer"
+  ],
+  "category": "tutorial",
+  "chain": [
+    {
+      "pipeline": "image-generator",
+      "what_it_does": "GPT Image 2 renders a 16-panel dance move reference grid — one labeled pose per cell.",
+      "artifact_kind": "image",
+      "with": {
+        "model": "gpt-image-2"
+      }
+    },
+    {
+      "pipeline": "music-generator",
+      "what_it_does": "Eleven Music composes a vocal-led K-pop dance bed. Generated FIRST so the dance can be choreographed to its rhythm.",
+      "artifact_kind": "audio",
+      "with": {
+        "duration_sec": "${inputs.dance_seconds}",
+        "model": "eleven-music-v1",
+        "vocals": true
+      }
+    },
+    {
+      "pipeline": "image-motion",
+      "what_it_does": "Claude designs a ken-burns pan over the grid so it reads on screen before the dance starts.",
+      "artifact_kind": "video"
+    },
+    {
+      "pipeline": "video-generator",
+      "what_it_does": "Seedance 2 Pro generates the dance clip. The grid tags as @image1 for choreography, the music tags as @audio1 for beat-conditioning — choreography is synced to the actual track.",
+      "artifact_kind": "video",
+      "with": {
+        "duration_sec": "${inputs.dance_seconds}",
+        "model": "seedance-2-0-pro",
+        "resolution": "720p"
+      }
+    },
+    {
+      "pipeline": "video-reel",
+      "what_it_does": "Claude stitches grid-reveal + dance with a snappy crossfade and the music bed.",
+      "artifact_kind": "video"
+    },
+    {
+      "pipeline": "watermark",
+      "what_it_does": "Overlays the Pipe2 logo (or your own --watermark-url) at the top-left corner so the clip carries attribution across reposts. Pass --no-watermark to skip.",
+      "artifact_kind": "video"
+    }
+  ],
+  "description": "Generate a labeled dance-move grid with GPT Image 2, hand it to Seedance 2 Pro as a reference so the choreography actually follows the moves, then stitch it into a music-synced vertical reel.",
+  "example_command": "pipe2 recipe run dance-reel",
+  "inputs": {
+    "aspect_ratio": {
+      "type": "enum",
+      "default": "9:16",
+      "values": [
+        "9:16",
+        "16:9",
+        "1:1"
+      ],
+      "cli_arg": "--ratio",
+      "description": "Output aspect ratio. 9:16 for TikTok/Reels, 16:9 for landscape."
+    },
+    "dance_seconds": {
+      "type": "int",
+      "default": 8,
+      "min": 4,
+      "max": 15,
+      "cli_arg": "--dance-seconds",
+      "description": "Duration of the Seedance segment. 4-15s; total reel is +3s for the grid reveal."
+    },
+    "dance_style": {
+      "type": "string",
+      "default": "K-pop solo choreography",
+      "cli_arg": "--style",
+      "description": "Genre/style label — e.g. \"K-pop solo choreography\", \"urban hip-hop\", \"classical ballet\"."
+    },
+    "moves": {
+      "type": "string",
+      "default": "moonwalk, body roll, donkey kick, electric slide",
+      "cli_arg": "--moves",
+      "description": "Comma-separated list of named moves Seedance should perform in order."
+    },
+    "music_mood": {
+      "type": "string",
+      "default": "K-pop dance anthem at 128 BPM. Punchy four-on-the-floor kick, sidechained glossy synth lead, glittery hi-hats, percussive synth stab on the off-beats. Full energy from bar one, no intro.",
+      "cli_arg": "--music",
+      "description": "Mood prompt for the Eleven Music bed."
+    },
+    "music_url": {
+      "type": "asset_url",
+      "default": "",
+      "cli_arg": "--music-url",
+      "description": "Pre-existing music file (URL or local path). When set, music-generator is skipped and this track is used directly."
+    },
+    "no_watermark": {
+      "type": "bool",
+      "default": false,
+      "cli_arg": "--no-watermark",
+      "description": "Ship the output unbranded. Skips the watermark step entirely."
+    },
+    "persona": {
+      "type": "string",
+      "default": "",
+      "cli_arg": "--persona",
+      "description": "Optional persona description (e.g. 'red-haired fashion-forward 21-year-old influencer in pink avant-garde outfit'). When set, generates a multi-angle character sheet first and passes it to Seedance as a second reference image so the dance preserves identity across frames."
+    },
+    "persona_url": {
+      "type": "asset_url",
+      "default": "",
+      "cli_arg": "--persona-url",
+      "description": "Pre-existing persona reference (URL or local path — same shape as --music-url / --watermark-url). When set, image-generator is skipped and this image goes directly to Seedance as the identity anchor. Use for recurring brand mascots or when you already have a character sheet you trust."
+    },
+    "subject": {
+      "type": "string",
+      "default": "breakdancer in baggy neon techwear",
+      "cli_arg": "--subject",
+      "description": "Who's dancing. Used in both the grid render and the Seedance prompt."
+    },
+    "watermark_scale_pct": {
+      "type": "int",
+      "default": 20,
+      "cli_arg": "--watermark-scale",
+      "description": "Watermark width as a percentage of the video width."
+    },
+    "watermark_url": {
+      "type": "asset_url",
+      "default": "",
+      "cli_arg": "--watermark-url",
+      "description": "Override the default Pipe2 logo with your own image (URL or local path). Empty means use the bundled Pipe2 watermark."
+    },
+    "watermark_variant": {
+      "type": "enum",
+      "default": "light",
+      "values": [
+        "amber",
+        "aqua",
+        "crimson",
+        "dark",
+        "emerald",
+        "indigo",
+        "light"
+      ],
+      "cli_arg": "--watermark-variant",
+      "description": "Which bundled Pipe2 logo to use when --watermark-url is empty. \"light\" for dark videos, \"dark\" for bright ones; coloured variants match the clip palette."
+    }
+  },
+  "intro_voiceover": "Most AI dance videos look like slop because the model is guessing the moves frame by frame. The fix is to pre-author a movement grid with GPT Image 2 and pass it to Seedance 2 Pro as a reference image — now it has a storyboard to follow. This recipe chains the grid, the dance, and a matching music bed into one reel.",
+  "published_at": "2026-05-11",
+  "schema_version": 1,
+  "see_also": [
+    "clip-factory"
+  ],
+  "slug": "dance-reel",
+  "tags": [
+    "cli",
+    "claude-code",
+    "pipelines",
+    "dance",
+    "seedance",
+    "gpt-image-2",
+    "reel",
+    "automation"
+  ],
+  "title": "One prompt → a vertical AI dance reel",
+  "updated_at": "2026-05-11"
+}

@@ -21,7 +21,7 @@ func newAuthCmd() *cobra.Command {
 }
 
 func newAuthLoginCmd() *cobra.Command {
-	var tokenFlag, apiURLFlag string
+	var tokenFlag, apiURLFlag, storageURLFlag string
 	c := &cobra.Command{
 		Use:   "login",
 		Short: "Save a personal access token to the config file",
@@ -54,6 +54,9 @@ The token is stored at $XDG_CONFIG_HOME/pipe2/config.json with mode 0600.`,
 			if apiURLFlag != "" {
 				cfg.APIURL = apiURLFlag
 			}
+			if storageURLFlag != "" {
+				cfg.StorageURL = storageURLFlag
+			}
 
 			// Verify the token works before persisting.
 			client := pipe2.NewClient(token, cfg.EffectiveAPIURL())
@@ -74,6 +77,7 @@ The token is stored at $XDG_CONFIG_HOME/pipe2/config.json with mode 0600.`,
 	}
 	c.Flags().StringVar(&tokenFlag, "token", "", `personal access token, or "-" to read from stdin`)
 	c.Flags().StringVar(&apiURLFlag, "api-url", "", "override saved API URL")
+	c.Flags().StringVar(&storageURLFlag, "storage-url", "", "override saved asset-storage base URL")
 	return c
 }
 

@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-05-29T20:13:50Z",
+  "recipes": [
+    {
+      "slug": "clip-factory",
+      "title": "Long video → multiple captioned clips, in one command",
+      "description": "Slice any long video into N captioned shorter clips. Transcribe once, auto-pick the moments with AI, trim + caption each in parallel. Optionally reformat to vertical (9:16) for TikTok / Reels / Shorts, square (1:1) for Instagram, or portrait (4:5) — caption anchor auto-adjusts.",
+      "category": "tutorial",
+      "tags": [
+        "cli",
+        "claude-code",
+        "captions",
+        "transcription",
+        "highlights",
+        "video-trim",
+        "video-reframe",
+        "shorts",
+        "vertical-video",
+        "tiktok",
+        "reels",
+        "instagram",
+        "youtube-shorts",
+        "agent-loop"
+      ],
+      "schema_version": 1,
+      "chain_length": 6,
+      "updatedAt": "2026-05-20"
+    },
+    {
+      "slug": "dance-reel",
+      "title": "One prompt → a vertical AI dance reel",
+      "description": "Generate a labeled dance-move grid with GPT Image 2, hand it to Seedance 2 Pro as a reference so the choreography actually follows the moves, then stitch it into a music-synced vertical reel.",
+      "category": "tutorial",
+      "tags": [
+        "cli",
+        "claude-code",
+        "pipelines",
+        "dance",
+        "seedance",
+        "gpt-image-2",
+        "reel",
+        "automation"
+      ],
+      "schema_version": 1,
+      "chain_length": 6,
+      "updatedAt": "2026-05-11"
+    }
+  ],
+  "schema_version": 1
+}

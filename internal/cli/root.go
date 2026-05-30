@@ -58,6 +58,7 @@ It is designed to be invoked by both humans and AI agents:
 	root.AddCommand(
 		newAuthCmd(),
 		newPipelinesCmd(),
+		newRecipeCmd(),
 		newRunsCmd(),
 		newAssetsCmd(),
 		newCreditsCmd(),

@@ -1,0 +1,13 @@
+# Recipe sample artifacts — per-step + hero previews rendered into the
+# recipe articles. Tracked via LFS so the binary tree stays cheap to
+# clone while the actual media follows the recipe code through any
+# future subtree split. Transcode policy lives in cookbook/_samples/
+# manifest.json (h264/aac, ≤90s, ≤1080p, ≤15MB video / ≤4MB audio).
+cookbook/*/samples/*.mp4   filter=lfs diff=lfs merge=lfs -text
+cookbook/*/samples/*.m4a   filter=lfs diff=lfs merge=lfs -text
+cookbook/*/samples/*.webp  filter=lfs diff=lfs merge=lfs -text
+cookbook/*/samples/*.png   filter=lfs diff=lfs merge=lfs -text
+cookbook/*/samples/*.jpg   filter=lfs diff=lfs merge=lfs -text
+
+# Bundled brand assets the CLI ships via go:embed.
+cookbook/assets/*.png  filter=lfs diff=lfs merge=lfs -text

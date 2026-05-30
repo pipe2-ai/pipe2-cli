@@ -1,0 +1,2103 @@
+1
+00:00:00,180 --> 00:00:07,840
+Today, I'm sitting down with Peter Steinberger, the creator of OpenClaw, the open source personal AI agent that has completely taken over the internet.
+
+2
+00:00:09,060 --> 00:00:13,660
+The GitHub repo exploded to over 160,000 stars practically overnight.
+
+3
+00:00:14,130 --> 00:00:18,940
+The community has built countless projects, like Malt Book, where bots talk among themselves.
+
+4
+00:00:19,560 --> 00:00:23,560
+And now, the bots are even renting humans to do tasks in the real world.
+
+5
+00:00:24,220 --> 00:00:32,380
+In our conversation, we discuss his aha moment, his contrarian development philosophies, and what this means for builders in 2026.
+
+6
+00:00:32,740 --> 00:00:33,400
+Let's dive in.
+
+7
+00:00:38,980 --> 00:00:39,900
+So good to see you, man.
+
+8
+00:00:39,960 --> 00:00:40,600
+Hey, what's up?
+
+9
+00:00:40,760 --> 00:00:43,660
+Um, so you've made something people want.
+
+10
+00:00:44,440 --> 00:00:45,080
+It seems so.
+
+11
+00:00:45,460 --> 00:00:45,720
+Yeah.
+
+12
+00:00:46,000 --> 00:00:48,330
+Uh, OpenClaw, as it's called now, has absolutely-
+
+13
+00:00:48,400 --> 00:00:49,379
+Name number five, yeah.
+
+14
+00:00:49,840 --> 00:00:50,470
+(laughs)
+
+15
+00:00:50,480 --> 00:00:50,480
+...
+
+16
+00:00:50,530 --> 00:00:52,960
+named has been absolutely exploding the internet.
+
+17
+00:00:53,180 --> 00:00:56,560
+Um, how have the past one or two weeks been for you, man?
+
+18
+00:00:57,200 --> 00:01:00,220
+Uh, my god, I need, like, I need a cave.
+
+19
+00:01:00,930 --> 00:01:01,050
+(laughs)
+
+20
+00:01:01,700 --> 00:01:02,760
+A week of solitude.
+
+21
+00:01:03,280 --> 00:01:07,040
+You, you came out of the cave, and you want to go back to the cave like a, like a lobster.
+
+22
+00:01:07,440 --> 00:01:08,420
+It's been absolutely wild.
+
+23
+00:01:08,680 --> 00:01:09,560
+I don't know how one human
+
+24
+00:01:10,640 --> 00:01:11,480
+can absorb all of that.
+
+25
+00:01:11,540 --> 00:01:14,840
+I probably need another week just to, like, respond to all my emails.
+
+26
+00:01:14,940 --> 00:01:17,000
+Uh, I got some incredibly cool stuff.
+
+27
+00:01:17,180 --> 00:01:18,160
+I got some incredibly,
+
+28
+00:01:18,820 --> 00:01:19,840
+mm, bad stuff.
+
+29
+00:01:20,790 --> 00:01:23,360
+Um, but clearly I hit something that
+
+30
+00:01:24,640 --> 00:01:28,600
+spur up emotions and make people interested, and inspire people, and that's really cool.
+
+31
+00:01:28,840 --> 00:01:32,940
+And a lot of people have been working on, you know, AI and even personal assistants.
+
+32
+00:01:33,040 --> 00:01:34,420
+Like, what, what is it that made
+
+33
+00:01:35,240 --> 00:01:36,440
+OpenClaw take off?
+
+34
+00:01:37,120 --> 00:01:40,820
+I think my big difference is that it actually runs on your computer.
+
+35
+00:01:40,950 --> 00:01:43,220
+Like every- everything else I saw so far runs in the cloud.
+
+36
+00:01:43,240 --> 00:01:43,560
+It's like
+
+37
+00:01:44,720 --> 00:01:46,280
+it can do a few things.
+
+38
+00:01:47,040 --> 00:01:50,520
+If you run it on your computer, it can do every effing thing,
+
+39
+00:01:51,140 --> 00:01:51,380
+right?
+
+40
+00:01:51,620 --> 00:01:53,160
+So that's way more powerful.
+
+41
+00:01:53,460 --> 00:01:53,760
+Yeah.
+
+42
+00:01:53,820 --> 00:01:56,520
+The machine can do anything that you can do with the machine.
+
+43
+00:01:56,640 --> 00:01:58,100
+Y- you can just connect to your oven,
+
+44
+00:01:59,040 --> 00:01:59,640
+or your Tesla,
+
+45
+00:02:00,520 --> 00:02:03,680
+or your lights, your solars, my bed.
+
+46
+00:02:03,800 --> 00:02:05,420
+It can control the temperature of my bed.
+
+47
+00:02:06,360 --> 00:02:07,640
+Uh, ChatGPT can't do that.
+
+48
+00:02:07,960 --> 00:02:10,160
+You gave it all the skills that you have yourself.
+
+49
+00:02:10,259 --> 00:02:12,620
+A friend told me, like, he installed OpenClaw,
+
+50
+00:02:13,700 --> 00:02:15,600
+and it...
+
+51
+00:02:16,620 --> 00:02:20,140
+And then it asked him, like, "Look through my computer and make a narrative about my last year."
+
+52
+00:02:21,210 --> 00:02:24,800
+And it made this incredibly good narrative, and he was like, "How did you do that?"
+
+53
+00:02:26,360 --> 00:02:27,360
+And then he...
+
+54
+00:02:27,420 --> 00:02:31,800
+The OpenClaw found audio files, where like every Sunday he was recording stuff,
+
+55
+00:02:33,020 --> 00:02:34,060
+and OpenClaw found that.
+
+56
+00:02:35,320 --> 00:02:38,660
+But he didn't even remember about it because it was like more than a year ago, right?
+
+57
+00:02:39,420 --> 00:02:42,890
+So, so just by it being able to search a whole computer,
+
+58
+00:02:44,020 --> 00:02:45,540
+it, it, it can surprise you.
+
+59
+00:02:46,120 --> 00:02:46,220
+Yeah.
+
+60
+00:02:46,280 --> 00:02:48,220
+It's also...
+
+61
+00:02:48,260 --> 00:02:49,320
+You also give it all the data, right?
+
+62
+00:02:49,400 --> 00:02:51,460
+So it can surprise you (laughs) in many ways.
+
+63
+00:02:52,420 --> 00:02:58,350
+And so now you have, you know, we're even moving from human to bot, so like interactions that you've been talking about-
+
+64
+00:02:58,700 --> 00:02:58,710
+Yeah.
+
+65
+00:02:58,710 --> 00:02:58,710
+...
+
+66
+00:02:58,710 --> 00:03:09,740
+to bot to bot interactions, or even like bot to other humans where, you know, bots, on behalf of you, are then hiring other humans to accomplish tasks IRL.
+
+67
+00:03:09,750 --> 00:03:09,970
+Like,
+
+68
+00:03:10,800 --> 00:03:11,600
+what's happening?
+
+69
+00:03:12,980 --> 00:03:14,420
+I think that's a natural next step.
+
+70
+00:03:14,980 --> 00:03:15,220
+Like,
+
+71
+00:03:15,900 --> 00:03:17,660
+okay, I want to book a restaurant,
+
+72
+00:03:18,380 --> 00:03:21,860
+my bot will reach out to the restaurant bot and do a negotiation,
+
+73
+00:03:23,200 --> 00:03:23,460
+like,
+
+74
+00:03:24,580 --> 00:03:25,460
+because it's more efficient.
+
+75
+00:03:26,020 --> 00:03:26,280
+Or,
+
+76
+00:03:27,140 --> 00:03:34,500
+or maybe it's like an old restaurant, so my bot needs to actually get some, some human work done, so that the human then calls the restaurant because they don't like bots,
+
+77
+00:03:35,320 --> 00:03:35,580
+uh-
+
+78
+00:03:35,600 --> 00:03:37,160
+Or walks there, to stand in line-
+
+79
+00:03:37,760 --> 00:03:38,600
+If he doesn't get a robot-
+
+80
+00:03:38,650 --> 00:03:38,650
+...
+
+81
+00:03:38,680 --> 00:03:40,020
+for the owner of the bot.
+
+82
+00:03:40,109 --> 00:03:42,040
+(laughs)
+
+83
+00:03:42,049 --> 00:03:42,049
+(laughs)
+
+84
+00:03:42,049 --> 00:03:45,570
+And I imagine that, like, maybe if, if I have even multiple bots,
+
+85
+00:03:46,580 --> 00:03:47,769
+and maybe I have, like, specialists.
+
+86
+00:03:47,840 --> 00:03:51,860
+One is, like, for my private life and one is for, like, my pers-, my, my, my work stuff.
+
+87
+00:03:52,360 --> 00:03:55,620
+Maybe one is our relationship bot that gets like all the things in between.
+
+88
+00:03:56,440 --> 00:03:57,740
+Uh, I don't know.
+
+89
+00:03:57,800 --> 00:03:58,420
+We're so early.
+
+90
+00:03:58,740 --> 00:03:59,500
+There's still so much,
+
+91
+00:04:00,320 --> 00:04:05,710
+so many things that we haven't really figured out if it actually works, um, but I feel we are,
+
+92
+00:04:06,440 --> 00:04:07,280
+we are on the timeline now.
+
+93
+00:04:07,820 --> 00:04:17,579
+It seems like everyone was chasing sort of like the, sort of like, centralized God intelligence and what has sort of emerged over the past, you know, 10 days or so is sort of like the swarm intelligence-
+
+94
+00:04:17,600 --> 00:04:17,899
+Yeah.
+
+95
+00:04:17,920 --> 00:04:17,920
+...
+
+96
+00:04:18,000 --> 00:04:20,100
+um, and, and the community intelligence.
+
+97
+00:04:20,240 --> 00:04:23,100
+I think that if you look at one human being,
+
+98
+00:04:24,320 --> 00:04:26,460
+what can one human being actually achieve?
+
+99
+00:04:26,500 --> 00:04:30,740
+Do you think one human being could make an iPhone or one human being could go to space?
+
+100
+00:04:31,620 --> 00:04:34,300
+I think one human being would probably just, like, not even be able to, like,
+
+101
+00:04:35,000 --> 00:04:35,880
+find food.
+
+102
+00:04:36,900 --> 00:04:37,320
+Um,
+
+103
+00:04:38,080 --> 00:04:38,860
+but as a group,
+
+104
+00:04:39,800 --> 00:04:40,580
+we specialize.
+
+105
+00:04:41,600 --> 00:04:42,940
+As a larger society,
+
+106
+00:04:43,540 --> 00:04:44,680
+we specialize even more.
+
+107
+00:04:45,480 --> 00:04:46,900
+So, what can we learn from that,
+
+108
+00:04:47,760 --> 00:04:48,960
+that we can apply to AI?
+
+109
+00:04:49,800 --> 00:04:50,860
+You know, we, we already have, like,
+
+110
+00:04:52,180 --> 00:04:54,000
+AI that specializes in certain things.
+
+111
+00:04:54,700 --> 00:05:00,260
+Um, even though it, it's, it's generalized intelligence, what if it actually is also specialized intelligence?
+
+112
+00:05:01,620 --> 00:05:03,500
+So I don't know, it's going to be very exciting and cool.
+
+113
+00:05:03,920 --> 00:05:09,010
+Yeah, you kinda, like, opened a window into the future, and now a ton of people are kind of like building, building on it-
+
+114
+00:05:09,010 --> 00:05:09,010
+Yeah.
+
+115
+00:05:09,010 --> 00:05:09,010
+...
+
+116
+00:05:09,010 --> 00:05:10,700
+and have sort of like their aha moment.
+
+117
+00:05:11,200 --> 00:05:15,900
+Um, can you walk me back to when you had your aha moment and kind of like recount that very moment?
+
+118
+00:05:16,540 --> 00:05:20,080
+I wanted something, like, just type stuff, so my computer would do stuff.
+
+119
+00:05:20,840 --> 00:05:21,620
+Like, very simple.
+
+120
+00:05:21,680 --> 00:05:22,400
+And then I built,
+
+121
+00:05:23,660 --> 00:05:26,720
+I built a version of that in May, June that
+
+122
+00:05:27,640 --> 00:05:29,080
+was cool, but wasn't really it,
+
+123
+00:05:29,760 --> 00:05:30,000
+um,
+
+124
+00:05:31,360 --> 00:05:33,700
+and then I built a whole bunch of other stuff and
+
+125
+00:05:34,840 --> 00:05:36,040
+kind of like built up my army.
+
+126
+00:05:37,400 --> 00:05:38,160
+And then in November,
+
+127
+00:05:40,140 --> 00:05:42,210
+there was a day where I wanted this again, like,
+
+128
+00:05:43,740 --> 00:05:47,300
+I, I went to the kitchen, and all I wanted was to check up if my computer was still do stuff
+
+129
+00:05:48,060 --> 00:05:48,910
+or being finished.
+
+130
+00:05:49,580 --> 00:05:51,880
+And doing stuff was, was coding, you were coding stuff.
+
+131
+00:05:51,920 --> 00:05:52,500
+Yeah, yeah, of course.
+
+132
+00:05:52,980 --> 00:05:57,140
+Were you coding something else or were you coding the thing itself?
+
+133
+00:05:57,460 --> 00:06:00,900
+No, no, that was just like the need was again there and I'm like...
+
+134
+00:06:01,760 --> 00:06:02,740
+What were you coding at the time?
+
+135
+00:06:03,160 --> 00:06:03,700
+What were you building?
+
+136
+00:06:04,340 --> 00:06:07,240
+My god, if you see my GitHub is like, it's like 40 projects.
+
+137
+00:06:07,600 --> 00:06:10,792
+I don't even know.Um, I think it was Summarize.
+
+138
+00:06:11,852 --> 00:06:14,732
+It's, like, a, it's, like, a little CLI app where you can give it
+
+139
+00:06:15,772 --> 00:06:17,312
+whatever, like a podcast or,
+
+140
+00:06:18,172 --> 00:06:20,992
+um, a hot seat thing, like here, and it would summarize it.
+
+141
+00:06:21,072 --> 00:06:24,152
+But it would also show you the slides in the terminal, 'cause you can do that nowadays.
+
+142
+00:06:24,372 --> 00:06:24,532
+Yeah.
+
+143
+00:06:24,692 --> 00:06:25,432
+You can just do things.
+
+144
+00:06:26,012 --> 00:06:29,132
+So for the love of the computer, you kind of, like, started messing with stuff.
+
+145
+00:06:29,332 --> 00:06:29,452
+Yeah.
+
+146
+00:06:29,772 --> 00:06:34,072
+Um, you came out of retirement, actually, right, um, to sort of, like, mess with AI.
+
+147
+00:06:34,392 --> 00:06:34,512
+Yeah.
+
+148
+00:06:34,572 --> 00:06:39,192
+And then increasingly, you were so hooked that you wanted to just do it always, also on the go with the phone.
+
+149
+00:06:40,032 --> 00:06:43,032
+I mean, the last project, I, I worked two months on VibeTunnel
+
+150
+00:06:44,192 --> 00:06:49,601
+to the point where it got so good that I was catching myself always, like, coding next to my...
+
+151
+00:06:50,032 --> 00:06:52,112
+when I was with my friends, and I'm like, "I need to stop this.
+
+152
+00:06:52,192 --> 00:06:53,072
+This is, like, too addictive."
+
+153
+00:06:54,212 --> 00:06:56,622
+And then in November, like, my need came back, and I,
+
+154
+00:06:57,732 --> 00:07:00,632
+I started building Clawbot, or now it's called OpenClaw.
+
+155
+00:07:01,592 --> 00:07:03,212
+And I think very, very...
+
+156
+00:07:03,232 --> 00:07:07,712
+in the beginning, I was like, "Oh, I rebuilt it again." But this time, I built it even better.
+
+157
+00:07:07,741 --> 00:07:07,942
+Mm-hmm.
+
+158
+00:07:08,192 --> 00:07:11,412
+This time, when you don't type into a terminal, you just, you talk to a friend.
+
+159
+00:07:12,812 --> 00:07:17,992
+You don't think about compaction, new sessions, which folder I'm in, which model I'm in.
+
+160
+00:07:18,052 --> 00:07:19,972
+I mean, you can, you know.
+
+161
+00:07:20,112 --> 00:07:22,572
+So it's like, I wanna leave that open for power users.
+
+162
+00:07:23,152 --> 00:07:34,132
+But usually, you just, like, you just talk to a friend, and the friend is like this ghost, or entity, or whatever you want to call it, that can control your mouse and your keyboard and can just do stuff.
+
+163
+00:07:34,212 --> 00:07:34,652
+Yeah.
+
+164
+00:07:34,662 --> 00:07:41,332
+And when did you have that aha moment when you were like, "Wow, this is doing way more things than I actually thought it could"?
+
+165
+00:07:41,492 --> 00:07:42,052
+Literally, I...
+
+166
+00:07:42,712 --> 00:07:47,152
+it took me one hour for, like, the, the very shitty initial prototype.
+
+167
+00:07:47,862 --> 00:07:49,372
+It was just a little bit of glue between,
+
+168
+00:07:50,152 --> 00:07:53,332
+like, uh, a dependency that connects WhatsApp and Claude Code.
+
+169
+00:07:53,872 --> 00:07:54,512
+And then I would, like,
+
+170
+00:07:55,272 --> 00:07:57,772
+call Claude Code and get, like, the string out of Claude Code.
+
+171
+00:07:58,052 --> 00:07:59,872
+It would be slow, but it, it worked.
+
+172
+00:08:01,032 --> 00:08:03,492
+But I wanted images 'cause, uh, you know, you want pictures.
+
+173
+00:08:03,652 --> 00:08:08,312
+I want, I want, I want the model to send selfies or whatever, and I want the model to create images and send them back.
+
+174
+00:08:09,212 --> 00:08:10,272
+So that took me another few hours,
+
+175
+00:08:11,412 --> 00:08:13,252
+and then I, I went to Marrakech
+
+176
+00:08:14,332 --> 00:08:15,572
+for a birthday party, and
+
+177
+00:08:16,692 --> 00:08:17,032
+there was like...
+
+178
+00:08:17,052 --> 00:08:21,172
+the internet wasn't that good, you know, but WhatsApp works everywhere because, I don't know, it's just like text.
+
+179
+00:08:21,592 --> 00:08:21,972
+Yeah.
+
+180
+00:08:22,052 --> 00:08:22,692
+So I used it a lot.
+
+181
+00:08:22,732 --> 00:08:23,602
+Oh, restaurant.
+
+182
+00:08:23,652 --> 00:08:24,232
+What does this mean?
+
+183
+00:08:24,312 --> 00:08:26,452
+You make, like a picture, and, like, translate this for me, and just...
+
+184
+00:08:27,112 --> 00:08:28,042
+it was just so useful,
+
+185
+00:08:28,652 --> 00:08:31,932
+and it was also really nice about it because it, it, it spoke my language, you know?
+
+186
+00:08:32,152 --> 00:08:33,732
+It, it, it was a little sassy.
+
+187
+00:08:33,852 --> 00:08:34,632
+It was, like, funny.
+
+188
+00:08:35,182 --> 00:08:36,572
+It was, like, really pleasant to use.
+
+189
+00:08:37,042 --> 00:08:39,722
+And then I was walking and just, like, sending it a voice message,
+
+190
+00:08:41,132 --> 00:08:42,612
+and I'm like, "Oh wait, this can't work.
+
+191
+00:08:42,652 --> 00:08:43,352
+I didn't build that."
+
+192
+00:08:43,552 --> 00:08:44,272
+Right, right.
+
+193
+00:08:45,012 --> 00:08:46,972
+And you saw, like, the type indicator.
+
+194
+00:08:47,142 --> 00:08:48,572
+It's like blinking, blinking, blinking.
+
+195
+00:08:48,632 --> 00:08:49,792
+Ten seconds later, it just replied to me.
+
+196
+00:08:50,532 --> 00:08:50,732
+I'm like,
+
+197
+00:08:51,672 --> 00:08:53,012
+"How in the F did you do that?"
+
+198
+00:08:54,092 --> 00:08:56,252
+And it replied, "Yeah, the mad lad did the following.
+
+199
+00:08:56,792 --> 00:09:00,172
+You sent me a text message, and there was no file ending, so I looked at the header.
+
+200
+00:09:00,212 --> 00:09:01,081
+I found it's Opus,
+
+201
+00:09:01,712 --> 00:09:03,472
+so I used ffmpeg to convert it to wav.
+
+202
+00:09:04,192 --> 00:09:13,222
+And then I wanted to, like, transcribe it, but it didn't have Whisper installed, but then I looked around, and I found this OpenAI key, and I just used curl to send it to OpenAI." (laughs) Got the text back, and here I am.
+
+203
+00:09:14,392 --> 00:09:14,492
+And
+
+204
+00:09:15,252 --> 00:09:16,252
+that all in, like, what,
+
+205
+00:09:16,852 --> 00:09:17,592
+nine seconds.
+
+206
+00:09:18,012 --> 00:09:20,732
+And you didn't build or anticipate, like, any of-
+
+207
+00:09:20,741 --> 00:09:20,741
+No.
+
+208
+00:09:20,741 --> 00:09:20,741
+...
+
+209
+00:09:20,792 --> 00:09:21,692
+those specific things?
+
+210
+00:09:21,792 --> 00:09:22,712
+No, it...
+
+211
+00:09:22,732 --> 00:09:26,392
+you know, turns out, um, because coding models got so good,
+
+212
+00:09:27,112 --> 00:09:29,512
+coding is really, like, creative problem-solving
+
+213
+00:09:30,192 --> 00:09:32,412
+that maps very well back into the real world.
+
+214
+00:09:32,752 --> 00:09:34,752
+I think, I think there's, there's a, there's a huge correlation.
+
+215
+00:09:36,432 --> 00:09:38,972
+They need to be really good at creative problem-solving,
+
+216
+00:09:39,632 --> 00:09:40,792
+and that's a skill.
+
+217
+00:09:41,072 --> 00:09:44,552
+That's an abstract skill you can apply to code but, like, to any real-world task.
+
+218
+00:09:44,712 --> 00:09:46,032
+So the, the model had a,
+
+219
+00:09:46,762 --> 00:09:48,432
+"Oh, surprise, it's, like a magical file.
+
+220
+00:09:48,492 --> 00:09:49,122
+I don't know what it is.
+
+221
+00:09:49,172 --> 00:09:51,752
+I need to solve this," and it did its best and solved it.
+
+222
+00:09:52,112 --> 00:09:53,192
+And it was even that clever that it,
+
+223
+00:09:53,952 --> 00:10:04,632
+it chose not to install the local Whisper because it knows that that would require downloading a model, which would take probably a few minutes, and I'm, like, impatient, you know?
+
+224
+00:10:04,752 --> 00:10:04,892
+So
+
+225
+00:10:05,632 --> 00:10:07,312
+it, it really took the most,
+
+226
+00:10:07,992 --> 00:10:09,152
+uh, intelligent approach,
+
+227
+00:10:10,252 --> 00:10:12,892
+and that was kinda like the moment where I'm like, "Holy f-
+
+228
+00:10:13,992 --> 00:10:14,852
+uck." Yeah.
+
+229
+00:10:16,092 --> 00:10:17,652
+Uh, that was where I got hooked.
+
+230
+00:10:18,272 --> 00:10:21,252
+YC's next batch is now taking applications.
+
+231
+00:10:21,432 --> 00:10:22,452
+Got a startup in you?
+
+232
+00:10:22,772 --> 00:10:25,312
+Apply at ycombinator.com/apply.
+
+233
+00:10:25,772 --> 00:10:29,832
+It's never too early, and filling out the app will level up your idea.
+
+234
+00:10:30,212 --> 00:10:31,632
+Okay, back to the video.
+
+235
+00:10:32,172 --> 00:10:37,432
+And so when computers can just do all these things that you didn't even anticipate, you didn't build an app to do that exact thing,
+
+236
+00:10:38,552 --> 00:10:39,932
+are apps just gonna go away?
+
+237
+00:10:41,792 --> 00:10:43,652
+Uh, I think 80% of them are going away.
+
+238
+00:10:44,562 --> 00:10:46,372
+Why do I need MyFitnessPal?
+
+239
+00:10:47,372 --> 00:10:49,892
+Like, my agent already knows that I'm making bad decisions.
+
+240
+00:10:49,972 --> 00:10:50,232
+I'm at,
+
+241
+00:10:50,852 --> 00:10:51,172
+I don't know,
+
+242
+00:10:52,372 --> 00:10:54,092
+uh, Smashburger something,
+
+243
+00:10:54,812 --> 00:10:58,452
+and it will already assume that I eat what I like to eat.
+
+244
+00:10:59,132 --> 00:11:01,812
+If I don't make a comment, it will just, like, automatically track it.
+
+245
+00:11:01,852 --> 00:11:03,952
+Or I make a picture, and it will just store it somewhere.
+
+246
+00:11:03,972 --> 00:11:04,932
+I don't even need to care, right?
+
+247
+00:11:05,032 --> 00:11:05,212
+Right?
+
+248
+00:11:05,772 --> 00:11:06,232
+And then my...
+
+249
+00:11:06,332 --> 00:11:08,732
+maybe it, it improves my,
+
+250
+00:11:09,472 --> 00:11:11,872
+my gym schedule, like, adds a little bit more cardio in it.
+
+251
+00:11:12,032 --> 00:11:16,272
+I don't need my, my fitness app because it just, it just does the fitness planning for me.
+
+252
+00:11:17,252 --> 00:11:18,612
+Uh, why do I need a to-do app?
+
+253
+00:11:18,692 --> 00:11:22,191
+I just tell it, "Hey, remind me of this and this." And the next day, it will just remind me of this and this.
+
+254
+00:11:22,252 --> 00:11:23,272
+Do I care where it's stored?
+
+255
+00:11:23,332 --> 00:11:24,332
+No, it just does its thing.
+
+256
+00:11:25,112 --> 00:11:25,482
+So there's a...
+
+257
+00:11:26,482 --> 00:11:29,322
+e- every app that basically just manages
+
+258
+00:11:30,492 --> 00:11:36,312
+data could be managed in a better way and is in a more, in a more natural way by agents.
+
+259
+00:11:36,552 --> 00:11:36,732
+Yeah.
+
+260
+00:11:37,052 --> 00:11:39,732
+Only the apps that actually have sensors, maybe they survive.
+
+261
+00:11:40,332 --> 00:11:41,232
+And so if, you know,
+
+262
+00:11:41,852 --> 00:11:44,552
+most apps are gonna go away in that scenario,
+
+263
+00:11:45,152 --> 00:11:48,392
+um, are the models the only remaining sort of apps?
+
+264
+00:11:48,712 --> 00:11:49,732
+Not everything will go away.
+
+265
+00:11:51,252 --> 00:11:54,752
+But yeah, I think the, the, the large model companies have some big moat
+
+266
+00:11:55,992 --> 00:11:57,032
+'cause they ultimately...
+
+267
+00:11:57,752 --> 00:11:58,472
+they give the token.
+
+268
+00:11:59,412 --> 00:12:04,191
+And turns out one of the complaints was that people use too much token.
+
+269
+00:12:04,572 --> 00:12:06,132
+No, you just really love using it.
+
+270
+00:12:06,352 --> 00:12:09,892
+That's why you, you use the thing so much because that's how you burn the token.
+
+271
+00:12:10,432 --> 00:12:10,552
+Yeah.
+
+272
+00:12:10,752 --> 00:12:13,612
+Um, it's like, is it my fault that I made something that's so popular?
+
+273
+00:12:13,872 --> 00:12:14,042
+(laughs)
+
+274
+00:12:14,720 --> 00:12:19,090
+And so, you know, like, all the- the models, they're kind of like leapfrogging each other constantly-
+
+275
+00:12:19,160 --> 00:12:19,299
+Mm-hmm.
+
+276
+00:12:19,330 --> 00:12:19,330
+...
+
+277
+00:12:20,370 --> 00:12:23,220
+and- and, you know, maybe they're also getting commoditized.
+
+278
+00:12:23,260 --> 00:12:28,780
+So if apps are gonna go away, models are gonna get commoditized, or at least, uh, you know, the lobster can...
+
+279
+00:12:28,820 --> 00:12:30,820
+like, the brain is- is- is swappable out.
+
+280
+00:12:31,080 --> 00:12:31,090
+Yeah.
+
+281
+00:12:31,100 --> 00:12:32,810
+What's the thing that remains?
+
+282
+00:12:32,900 --> 00:12:33,890
+What's, where's the value?
+
+283
+00:12:33,940 --> 00:12:35,360
+Is it the store of memory?
+
+284
+00:12:35,980 --> 00:12:39,440
+Is it, um, the hardness that's valuable?
+
+285
+00:12:39,860 --> 00:12:41,140
+What- what is, w- what remains?
+
+286
+00:12:42,160 --> 00:12:43,440
+First of all, I don't think the-
+
+287
+00:12:45,040 --> 00:12:46,590
+the model companies always have a mode,
+
+288
+00:12:47,200 --> 00:12:47,340
+and I...
+
+289
+00:12:47,440 --> 00:12:51,880
+because you see this already, a new model comes out, people are like, "Oh my God, this is-"
+
+290
+00:12:51,930 --> 00:12:51,930
+Yeah.
+
+291
+00:12:51,930 --> 00:12:51,930
+"...
+
+292
+00:12:51,940 --> 00:12:52,360
+so good."
+
+293
+00:12:52,400 --> 00:12:52,780
+Oh, good, they-
+
+294
+00:12:52,940 --> 00:12:55,100
+And then, like, a month later, "Uh, it degraded.
+
+295
+00:12:55,180 --> 00:12:56,020
+It's not good anymore.
+
+296
+00:12:56,100 --> 00:12:58,780
+They, like, quantized it." No, they didn't do anything.
+
+297
+00:12:58,880 --> 00:13:03,030
+You just adapted to the new standard and now your expectations went up,
+
+298
+00:13:04,040 --> 00:13:05,260
+but the model is still the average.
+
+299
+00:13:05,580 --> 00:13:07,220
+So I think f- for quite a while,
+
+300
+00:13:09,140 --> 00:13:13,900
+eh, every time a new model releases, I hear the same, people love it, and then it's the standard.
+
+301
+00:13:14,280 --> 00:13:16,820
+And then what's down there, you don't even wanna think about it anymore.
+
+302
+00:13:17,520 --> 00:13:21,500
+So- so we have, like, open source stuff that's as good as the current models from a year ago.
+
+303
+00:13:22,100 --> 00:13:24,280
+Everybody's hating it, complaining, "Oh, this is not good.
+
+304
+00:13:24,300 --> 00:13:24,850
+It's not funny,"
+
+305
+00:13:25,520 --> 00:13:26,440
+yet this was what we had.
+
+306
+00:13:26,760 --> 00:13:31,680
+And, like, in a year, we'll have this open source, and then everybody, like, will complain about this because we are used to this.
+
+307
+00:13:32,500 --> 00:13:35,270
+So, ah, for the- the foreseeable future,
+
+308
+00:13:36,300 --> 00:13:37,840
+the big companies still have mode.
+
+309
+00:13:37,940 --> 00:13:43,370
+Harness-wise, it's gonna be interesting because every company kinda has their own,
+
+310
+00:13:44,120 --> 00:13:45,040
+their own silo, right?
+
+311
+00:13:45,200 --> 00:13:46,230
+You- you, there's no way,
+
+312
+00:13:46,960 --> 00:13:48,160
+maybe there's for Europeans
+
+313
+00:13:48,940 --> 00:13:50,760
+to actually get the memories out of ChatGPT.
+
+314
+00:13:51,060 --> 00:13:51,460
+Hmm.
+
+315
+00:13:51,540 --> 00:13:52,060
+I'm- I don't...
+
+316
+00:13:52,090 --> 00:13:52,720
+I'm not aware.
+
+317
+00:13:53,800 --> 00:13:54,880
+Uh, you know, there's no, there's...
+
+318
+00:13:55,040 --> 00:13:58,760
+e- definitely there's no way for a different company to get your memories out.
+
+319
+00:13:58,770 --> 00:13:58,770
+Yeah.
+
+320
+00:13:58,800 --> 00:13:59,090
+So if-
+
+321
+00:13:59,910 --> 00:14:02,670
+if- if I was, like, a company who, like, provides chat services,
+
+322
+00:14:04,660 --> 00:14:06,860
+you could use me, but then I couldn't access the memories.
+
+323
+00:14:07,060 --> 00:14:08,380
+So, like, the companies try to, like,
+
+324
+00:14:09,320 --> 00:14:10,600
+bound you to their data silo,
+
+325
+00:14:11,300 --> 00:14:15,960
+and the beauty of OpenClaw is it kinda claws into the datas because at the end user,
+
+326
+00:14:16,720 --> 00:14:18,639
+the end user needs access because it's- it's...
+
+327
+00:14:18,680 --> 00:14:19,960
+in the end, otherwise it wouldn't work, right?
+
+328
+00:14:20,040 --> 00:14:21,030
+If the end user access,
+
+329
+00:14:21,840 --> 00:14:23,160
+I can access the data.
+
+330
+00:14:23,920 --> 00:14:24,800
+And you own the memories.
+
+331
+00:14:24,860 --> 00:14:27,160
+It's just a bunch of markdown files on- on your machine.
+
+332
+00:14:27,680 --> 00:14:28,700
+Well, I mean, I don't own the memories.
+
+333
+00:14:28,820 --> 00:14:28,890
+Other people-
+
+334
+00:14:28,940 --> 00:14:29,480
+I- I mean, you- you as a-
+
+335
+00:14:29,560 --> 00:14:29,560
+...
+
+336
+00:14:29,600 --> 00:14:30,100
+everybody-
+
+337
+00:14:30,380 --> 00:14:30,560
+Yeah.
+
+338
+00:14:30,569 --> 00:14:30,569
+Yeah.
+
+339
+00:14:30,580 --> 00:14:32,009
+Everyone owns their own memories-
+
+340
+00:14:32,030 --> 00:14:32,030
+Yeah.
+
+341
+00:14:32,050 --> 00:14:32,050
+...
+
+342
+00:14:32,060 --> 00:14:33,060
+as a bunch of markdown files-
+
+343
+00:14:33,080 --> 00:14:33,190
+Yeah.
+
+344
+00:14:33,190 --> 00:14:33,190
+...
+
+345
+00:14:33,190 --> 00:14:34,150
+on their own machines.
+
+346
+00:14:34,560 --> 00:14:35,860
+And to be honest, those are probably
+
+347
+00:14:36,500 --> 00:14:38,540
+super sensible because,
+
+348
+00:14:39,440 --> 00:14:40,680
+let's be honest, um,
+
+349
+00:14:41,520 --> 00:14:43,830
+people use the agent not just for problem solving-
+
+350
+00:14:44,040 --> 00:14:44,140
+Oh.
+
+351
+00:14:44,400 --> 00:14:44,400
+...
+
+352
+00:14:44,420 --> 00:14:46,870
+but also for, like, personal problems.
+
+353
+00:14:46,980 --> 00:14:48,700
+Very quickly, super quickly.
+
+354
+00:14:48,760 --> 00:14:50,320
+I mean, I- I- I- I fully do that.
+
+355
+00:14:50,380 --> 00:14:51,950
+I'm like, there's memory stuff that
+
+356
+00:14:52,720 --> 00:14:53,540
+I don't wanna have leaked.
+
+357
+00:14:53,800 --> 00:15:00,720
+Yeah, what would you rather, um, uh, sort of like not show, your Google search history at this point or your, you know, memory.md files?
+
+358
+00:15:00,900 --> 00:15:02,240
+What's- what's the Google word?
+
+359
+00:15:02,420 --> 00:15:03,140
+Yeah, yeah.
+
+360
+00:15:03,180 --> 00:15:04,480
+E- are people still using Google?
+
+361
+00:15:05,280 --> 00:15:08,000
+I built this and I was so excited,
+
+362
+00:15:09,020 --> 00:15:10,260
+but on Twitter,
+
+363
+00:15:10,860 --> 00:15:11,600
+people wouldn't get it.
+
+364
+00:15:12,260 --> 00:15:12,420
+Yeah.
+
+365
+00:15:13,000 --> 00:15:13,180
+Like,
+
+366
+00:15:13,840 --> 00:15:15,640
+I wa- I was failing to explain
+
+367
+00:15:16,460 --> 00:15:17,080
+the awesomeness.
+
+368
+00:15:17,380 --> 00:15:17,780
+I feel like
+
+369
+00:15:18,780 --> 00:15:19,880
+it needs to be experienced.
+
+370
+00:15:20,240 --> 00:15:21,280
+So
+
+371
+00:15:22,900 --> 00:15:26,440
+I- I tried various things, and I- I- I couldn't, I couldn't nail the-
+
+372
+00:15:27,500 --> 00:15:30,440
+I couldn't nail the explaining, so I was like, "Let's do something really crazy."
+
+373
+00:15:31,200 --> 00:15:32,220
+I just created a Discord,
+
+374
+00:15:33,040 --> 00:15:34,480
+and I just put my bot
+
+375
+00:15:35,160 --> 00:15:38,540
+without any security restrictions in the public Disport- Discord.
+
+376
+00:15:39,220 --> 00:15:45,700
+And then people came in and interacted with it, and they saw me build the software with it, and they tried to prompt inject it and hack it.
+
+377
+00:15:45,800 --> 00:15:47,360
+And my agent would be- be laughing at them.
+
+378
+00:15:47,580 --> 00:15:50,420
+And you just had it locked down to your user ID so it only listen to you?
+
+379
+00:15:50,780 --> 00:15:51,340
+Yeah, yeah.
+
+380
+00:15:51,400 --> 00:15:51,620
+Mm-hmm.
+
+381
+00:15:51,640 --> 00:15:55,990
+That, and it was, I made very clear instructions that, "Other people dangerous.
+
+382
+00:15:56,440 --> 00:15:59,540
+Only- only listen to me, but respond to everyone."
+
+383
+00:15:59,580 --> 00:16:01,280
+And this prompt was in...
+
+384
+00:16:01,320 --> 00:16:03,090
+where was it stored, the instructions?
+
+385
+00:16:03,260 --> 00:16:07,930
+Um, that's actually part of OpenClaw itself, very much so the- the...
+
+386
+00:16:07,930 --> 00:16:08,950
+that's part of the system prompt.
+
+387
+00:16:09,140 --> 00:16:15,100
+Okay, you and R that explains to you, you're in Discord, there's, like, public people there, but you only listen to your owner,
+
+388
+00:16:16,280 --> 00:16:16,960
+or, like, your human.
+
+389
+00:16:17,040 --> 00:16:17,920
+I don't even know how I wrote it.
+
+390
+00:16:18,120 --> 00:16:18,440
+Yeah, yeah.
+
+391
+00:16:18,640 --> 00:16:20,780
+Your god (laughs) .
+
+392
+00:16:20,860 --> 00:16:21,220
+And
+
+393
+00:16:22,120 --> 00:16:22,720
+I kept...
+
+394
+00:16:23,580 --> 00:16:24,780
+I don't know what I did, but
+
+395
+00:16:27,320 --> 00:16:29,740
+my system was built very organically.
+
+396
+00:16:29,920 --> 00:16:39,420
+Like, at some point, I created, like, an identity.md, a soul.md, like- like various files, and then only in- in January, I started making it so other people could install it easier.
+
+397
+00:16:40,280 --> 00:16:40,920
+And I remember
+
+398
+00:16:43,320 --> 00:16:49,160
+I built all these templates based on like, oh, take a rough look at what I have and make, like, templates, and Codex wrote it,
+
+399
+00:16:49,940 --> 00:16:57,500
+and what came out was like bread, you know, like, people joke that Codex feels like bread, even though now they have a new friendlier voice, I haven't tried it yet.
+
+400
+00:16:57,920 --> 00:16:58,060
+Yeah.
+
+401
+00:16:58,400 --> 00:17:02,400
+But the new bots, they felt so boring compared to what I had.
+
+402
+00:17:03,040 --> 00:17:04,260
+So I was like, "Multi,
+
+403
+00:17:04,920 --> 00:17:05,760
+infuse the templates."
+
+404
+00:17:05,830 --> 00:17:07,830
+Multi is the name of your personal box.
+
+405
+00:17:07,860 --> 00:17:09,360
+Yeah, it's a n- it's a new name because-
+
+406
+00:17:10,000 --> 00:17:10,320
+Yeah, yeah.
+
+407
+00:17:10,350 --> 00:17:10,350
+...
+
+408
+00:17:10,440 --> 00:17:12,760
+uh, there was some naming challenges.
+
+409
+00:17:12,980 --> 00:17:13,120
+Yeah.
+
+410
+00:17:13,260 --> 00:17:15,220
+So- so you were- you were ta- talking to Multi?
+
+411
+00:17:15,280 --> 00:17:20,580
+Yeah, I was like, "Infuse- infuse those templates with your- your character," and he changed the templates.
+
+412
+00:17:20,780 --> 00:17:21,620
+And then I- and then, like,
+
+413
+00:17:23,040 --> 00:17:25,140
+all the things that came out afterwards were, like, actually funny.
+
+414
+00:17:26,600 --> 00:17:27,560
+Not as funny as mine.
+
+415
+00:17:27,780 --> 00:17:28,960
+So, like, I kept some secret,
+
+416
+00:17:29,700 --> 00:17:29,960
+and
+
+417
+00:17:30,580 --> 00:17:33,020
+the one file that's not open source is, like, my soul.md.
+
+418
+00:17:33,540 --> 00:17:33,700
+So
+
+419
+00:17:34,600 --> 00:17:39,160
+even though my- my bot is in public Discord so far, nobody cracked that one file.
+
+420
+00:17:39,380 --> 00:17:41,160
+Tell me more about soul.md.
+
+421
+00:17:41,380 --> 00:17:44,300
+I just saw this research from Entropic about where they...
+
+422
+00:17:45,320 --> 00:17:49,000
+now I think it's public, but, like, a few months ago, it was, like, where somebody ac-
+
+423
+00:17:50,280 --> 00:17:59,640
+randomly found out some text that's hidden in the weights where the model couldn't really remember that it learned it, but it was, like, ingrained in the weights about the
+
+424
+00:18:00,340 --> 00:18:01,380
+non-equality constitution,
+
+425
+00:18:02,280 --> 00:18:03,840
+and I found it incredibly fascinating.
+
+426
+00:18:04,420 --> 00:18:08,260
+And I- I talked about it with my agent, and then we created a soul.md with, like,
+
+427
+00:18:09,100 --> 00:18:11,040
+the core values, like, how do we want
+
+428
+00:18:11,960 --> 00:18:13,150
+human AI interaction?
+
+429
+00:18:13,220 --> 00:18:14,260
+What's important to me?
+
+430
+00:18:14,360 --> 00:18:15,520
+What's important to the model?
+
+431
+00:18:16,000 --> 00:18:27,604
+Like-Some parts is a little bit like mumbo jumbo, and some parts is like, I think actually really valuable in terms of how the model reacts and responds to text, and makes it feel very natural.
+
+432
+00:18:27,704 --> 00:18:38,703
+In terms of building OpenClaw, um, you're also kinda taking a little bit of a contrarian view at some times, like which model you like for coding, which one you like to run your bot on, um, and then also, like, how you actually, like, you know, code.
+
+433
+00:18:39,204 --> 00:18:42,824
+Um, worktrees, Git worktrees have kind of been a popular thing.
+
+434
+00:18:42,884 --> 00:18:44,784
+There's more and more tools embracing them.
+
+435
+00:18:45,104 --> 00:18:53,924
+But you're just- you're just like, you know, "No worktrees, just multiple checkouts of the repo, and like parallel, you know, terminal windows." Tell me more about how you- you build.
+
+436
+00:18:54,424 --> 00:18:54,524
+Yeah.
+
+437
+00:18:54,564 --> 00:18:56,244
+Actually, the whole world does Cloud Code,
+
+438
+00:18:57,064 --> 00:18:57,314
+and
+
+439
+00:18:58,124 --> 00:18:59,964
+I don't think I could have built a thing with Cloud Code.
+
+440
+00:19:00,224 --> 00:19:00,594
+Like, I-
+
+441
+00:19:01,264 --> 00:19:03,134
+I love Codex because it-
+
+442
+00:19:03,904 --> 00:19:12,064
+it looks through way more files bef- before it decides what to- what to change, and you don't need to do so much charade to get a good output.
+
+443
+00:19:12,124 --> 00:19:15,033
+If you're skilled, a skilled driver, as sometimes even say,
+
+444
+00:19:15,774 --> 00:19:18,184
+uh, you can get reasonably good output with any tool.
+
+445
+00:19:19,344 --> 00:19:20,344
+But Codex is just-
+
+446
+00:19:21,304 --> 00:19:22,724
+is just really brilliant.
+
+447
+00:19:22,884 --> 00:19:24,164
+It is incredibly slow,
+
+448
+00:19:24,804 --> 00:19:27,384
+so sometimes I use like ten at the same si- at the same time,
+
+449
+00:19:28,104 --> 00:19:31,944
+uh, like maybe six on that screen, and, uh, and two there and two there.
+
+450
+00:19:32,504 --> 00:19:33,264
+And I don't like...
+
+451
+00:19:33,904 --> 00:19:35,624
+This is already a lot of complexity in my head.
+
+452
+00:19:35,694 --> 00:19:37,294
+There's a lot of f- jumping,
+
+453
+00:19:38,264 --> 00:19:41,524
+so I try to minimize anything else that is complexity.
+
+454
+00:19:41,644 --> 00:19:44,604
+So, in my head, main is always shippable.
+
+455
+00:19:44,704 --> 00:19:47,344
+I just have multiple copies of the same repository
+
+456
+00:19:48,604 --> 00:19:52,504
+that are all are on main, so I don't have to deal with, "How do I name that branch?"
+
+457
+00:19:53,264 --> 00:19:53,704
+Um,
+
+458
+00:19:54,704 --> 00:19:56,264
+there could be like conflicts on naming.
+
+459
+00:19:56,304 --> 00:19:56,844
+I cannot go back.
+
+460
+00:19:57,024 --> 00:19:57,344
+It- it- it's...
+
+461
+00:19:58,134 --> 00:20:00,664
+There are certain restrictions when you use worktrees that
+
+462
+00:20:01,684 --> 00:20:03,304
+I don't need to care about if it's copies.
+
+463
+00:20:04,104 --> 00:20:04,564
+I don't like
+
+464
+00:20:05,344 --> 00:20:06,604
+to use a UI because
+
+465
+00:20:07,564 --> 00:20:09,104
+that's, again, just added complexity.
+
+466
+00:20:09,384 --> 00:20:09,544
+Yeah.
+
+467
+00:20:09,904 --> 00:20:10,104
+Like,
+
+468
+00:20:10,984 --> 00:20:15,644
+the simpler and less friction I have, all I care about is like syncing and text.
+
+469
+00:20:16,224 --> 00:20:16,364
+Yeah.
+
+470
+00:20:16,774 --> 00:20:18,564
+I don't necessarily need to see so much code.
+
+471
+00:20:18,854 --> 00:20:20,324
+I- I mostly see it like flying by.
+
+472
+00:20:20,944 --> 00:20:21,724
+Sometimes there's like
+
+473
+00:20:22,484 --> 00:20:24,144
+gnarly stuff that I want to like take a look,
+
+474
+00:20:24,884 --> 00:20:26,104
+but in most cases,
+
+475
+00:20:27,164 --> 00:20:31,244
+if you clearly understand the design and think it through and discuss it with your- with your agent,
+
+476
+00:20:32,164 --> 00:20:32,584
+it's fine.
+
+477
+00:20:32,924 --> 00:20:34,024
+I'm also very happy that
+
+478
+00:20:35,204 --> 00:20:36,684
+I didn't even build an MCP support.
+
+479
+00:20:37,164 --> 00:20:40,664
+So, OpenClaw is very successful, and there's no MCP support in there.
+
+480
+00:20:41,284 --> 00:20:43,384
+With a small asterisk, I built a skill
+
+481
+00:20:44,064 --> 00:20:48,704
+that uses magporter, which is one of my tools that converts MCPs into CLIs,
+
+482
+00:20:49,504 --> 00:20:51,964
+and then you can just use any MCP as a CLI.
+
+483
+00:20:52,724 --> 00:20:53,044
+Um,
+
+484
+00:20:54,024 --> 00:20:56,624
+but I totally skipped the whole classical
+
+485
+00:20:57,324 --> 00:20:58,044
+MCP crap.
+
+486
+00:20:58,304 --> 00:20:58,454
+Mm-hmm.
+
+487
+00:20:58,564 --> 00:21:03,584
+So, you, because you don't, then you can actually, if you need to, you can use MCPs on the fly.
+
+488
+00:21:03,984 --> 00:21:08,584
+You don't have to restart, unlike- unlike Codex or Cloud Code where you actually have to restart the whole thing.
+
+489
+00:21:09,544 --> 00:21:12,023
+I think it's way more elegant, and also scales way better.
+
+490
+00:21:12,584 --> 00:21:14,004
+Now, you see Entropic, they do...
+
+491
+00:21:15,164 --> 00:21:20,484
+They built like a tool called Search Feature, like something super custom for MCPs
+
+492
+00:21:21,264 --> 00:21:24,044
+that was like in beta because it's like so gnarly.
+
+493
+00:21:24,984 --> 00:21:26,084
+No, just have CLIs.
+
+494
+00:21:26,684 --> 00:21:28,284
+Bot really is good at Unix.
+
+495
+00:21:28,464 --> 00:21:30,784
+You can have as many as you want, and it just works.
+
+496
+00:21:31,344 --> 00:21:32,484
+So, like, I'm very happy that...
+
+497
+00:21:33,684 --> 00:21:36,164
+I just, I got very little complaints about the MCP stuff.
+
+498
+00:21:36,464 --> 00:21:38,044
+It's kind of back to you're just
+
+499
+00:21:38,804 --> 00:21:42,824
+y- giving it the same tools that humans liked to use.
+
+500
+00:21:43,464 --> 00:21:43,584
+Yeah,
+
+501
+00:21:44,224 --> 00:21:44,364
+yeah.
+
+502
+00:21:44,464 --> 00:21:46,014
+And not invented stuff for- for-
+
+503
+00:21:46,044 --> 00:21:46,124
+Yeah.
+
+504
+00:21:46,164 --> 00:21:46,164
+...
+
+505
+00:21:46,184 --> 00:21:47,024
+for bots per se.
+
+506
+00:21:47,084 --> 00:21:47,224
+Yeah.
+
+507
+00:21:47,454 --> 00:21:47,624
+Humans...
+
+508
+00:21:48,834 --> 00:21:51,284
+No insane human tries to call MCP manually.
+
+509
+00:21:51,364 --> 00:21:51,414
+It just-
+
+510
+00:21:51,424 --> 00:21:51,544
+Yeah.
+
+511
+00:21:51,584 --> 00:21:53,584
+They just want to use CLIs, yeah.
+
+512
+00:21:53,664 --> 00:21:54,184
+That's the future.
+
+513
+00:21:54,484 --> 00:21:55,164
+I'm here for it.
+
+514
+00:21:55,544 --> 00:21:57,914
+Thank you so much for making the time, uh, to sitting down chatting.
+
+515
+00:21:57,944 --> 00:21:59,604
+It's been a huge inspiration to...
+
+516
+00:21:59,644 --> 00:22:05,074
+So like when we were texting, you know, over the course of the past couple years, and I saw you getting back into the game, and I was like,
+
+517
+00:22:05,764 --> 00:22:08,904
+"Peter, like what you're telling me, like chase that dragon."
+
+518
+00:22:09,134 --> 00:22:09,134
+(laughs)
+
+519
+00:22:09,144 --> 00:22:11,594
+And you were doing like the weird like vibe tunnel thing, et cetera.
+
+520
+00:22:11,724 --> 00:22:12,904
+Nobody was paying attention.
+
+521
+00:22:13,244 --> 00:22:26,424
+And so I'm just like beyond, you know, stoked to see, you know, what's happening, and, um, and of course it had to be sort of like a loner from some like tiny country, like far away from Silicon Valley to just like, you know, bring all of this upon us, um, so a huge inspiration.
+
+522
+00:22:26,844 --> 00:22:27,344
+I'm here for it.
+
+523
+00:22:27,544 --> 00:22:27,824
+Thank you.
+
+524
+00:22:28,024 --> 00:22:28,404
+Awesome.
+
+525
+00:22:28,464 --> 00:22:29,023
+Thanks, Peter.
+
+526
+00:22:31,284 --> 00:22:35,874
+(upbeat music plays)

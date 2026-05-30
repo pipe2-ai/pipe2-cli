@@ -162,6 +162,7 @@ pipe2 help                           # human-readable
 - [`pipe2 auth`](#pipe2-auth) — Manage Pipe2.ai authentication
 - [`pipe2 credits`](#pipe2-credits) — Credit balance and history
 - [`pipe2 pipelines`](#pipe2-pipelines) — List and run Pipe2.ai pipelines
+- [`pipe2 recipe`](#pipe2-recipe) — Run cookbook recipes
 - [`pipe2 runs`](#pipe2-runs) — Inspect pipeline runs
 - [`pipe2 schema`](#pipe2-schema) — Dump a machine-readable schema of every command, flag, and exit code
 - [`pipe2 skill`](#pipe2-skill) — Install and inspect the bundled Claude Code skill
@@ -263,6 +264,7 @@ pipe2 auth pipe2 auth login [flags]
 **Flags:**
 
 - `--api-url` (`string`) — override saved API URL
+- `--storage-url` (`string`) — override saved asset-storage base URL
 - `--token` (`string`) — personal access token, or "-" to read from stdin
 
 ### `pipe2 auth logout`
@@ -349,6 +351,92 @@ pipe2 pipelines pipe2 pipelines run [flags]
 - `--pipeline` (`string`) — pipeline slug (required)
 - `--wait` (`bool`) — block until the run reaches a terminal status
 - `--wait-timeout` (`duration`) default `10m0s` — max time to wait when --wait is set
+
+### `pipe2 recipe`
+
+<!-- anchor: pipe2-recipe -->
+
+Run cookbook recipes
+
+Recipes are typed Go programs that orchestrate one or more Pipe2
+pipelines. They ship with the CLI binary.
+
+Examples:
+  pipe2 recipe list
+  pipe2 recipe info clip-factory
+  pipe2 recipe run clip-factory --input https://example.com/talk.mp4 --reformat 9:16
+  pipe2 recipe run clip-factory --input ./my-clip.mp4 --highlights-count 3 --preset karaoke-gradient
+
+```
+pipe2 pipe2 recipe
+```
+
+### `pipe2 recipe download`
+
+<!-- anchor: pipe2-recipe-download -->
+
+Download every step artifact from a --capture-to run
+
+Download the per-step artifacts recorded in a recipe run's state.json.
+
+A run started with --capture-to <dir> writes a state.json recording
+each step's pipeline, run id, and output. download reads that file and
+fetches every step's artifact:
+
+  pipe2 recipe run clip-factory --input clip.mp4 --capture-to ./out
+  pipe2 recipe download --from ./out
+
+Files land as step-<n>-<pipeline>.<ext>. Use --to to write elsewhere.
+
+Asset paths are resolved against the configured storage base — set it
+once with 'pipe2 auth login --storage-url ...' or per-call via
+$PIPE2_STORAGE_URL.
+
+```
+pipe2 recipe pipe2 recipe download [flags]
+```
+
+**Flags:**
+
+- `--from` (`string`) — capture directory containing state.json (required)
+- `--to` (`string`) — output directory (default: same as --from)
+
+### `pipe2 recipe info`
+
+<!-- anchor: pipe2-recipe-info -->
+
+Pretty-print a recipe's manifest
+
+```
+pipe2 recipe pipe2 recipe info <slug>
+```
+
+### `pipe2 recipe list`
+
+<!-- anchor: pipe2-recipe-list -->
+
+List recipes compiled into this binary
+
+```
+pipe2 recipe pipe2 recipe list
+```
+
+### `pipe2 recipe run`
+
+<!-- anchor: pipe2-recipe-run -->
+
+Execute a recipe end-to-end
+
+```
+pipe2 recipe pipe2 recipe run <slug> [--<input> <value> ...] [flags]
+```
+
+**Flags:**
+
+- `--capture-to` (`string`) — directory where Capture writes per-step artifacts (used by the asset-production pipeline)
+- `--dry-run` (`bool`) — resolve inputs and log the chain that would run, but skip dispatch (no credits charged, no auth required)
+- `--estimate` (`bool`) — fetch credit cost for each step via the API and print a running total (composes with --dry-run for a no-spend cost preview; requires auth)
+- `--resume` (`bool`) — reuse step outputs recorded in <capture-to>/state.json from a prior run; only steps not yet recorded are dispatched
 
 ### `pipe2 runs`
 

@@ -12,8 +12,9 @@ import (
 // JSON is used (not TOML) to keep the dep tree at zero — the SDK and Cobra
 // are already large enough.
 type Config struct {
-	APIURL string `json:"api_url,omitempty"`
-	Token  string `json:"token,omitempty"`
+	APIURL     string `json:"api_url,omitempty"`
+	StorageURL string `json:"storage_url,omitempty"`
+	Token      string `json:"token,omitempty"`
 }
 
 // configPath returns the resolved config file path, honouring the global
@@ -90,6 +91,21 @@ func (c *Config) EffectiveAPIURL() string {
 		return c.APIURL
 	}
 	return "https://api.pipe2.ai/v1/graphql"
+}
+
+// EffectiveStorageURL returns the asset-storage base URL honouring
+// env > config > default. Stored asset paths use a "/s3/..." convention;
+// joining them onto this base yields a fetchable URL. Used by
+// `recipe download` and by --capture-to artifact saving. In local dev
+// this is the SeaweedFS host (PIPE2_STORAGE_URL=http://localhost:8333).
+func (c *Config) EffectiveStorageURL() string {
+	if v := os.Getenv("PIPE2_STORAGE_URL"); v != "" {
+		return v
+	}
+	if c != nil && c.StorageURL != "" {
+		return c.StorageURL
+	}
+	return "https://assets.pipe2.ai"
 }
 
 // EffectiveToken returns the token honouring CLI flag > env > config.
