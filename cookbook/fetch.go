@@ -426,19 +426,22 @@ func ensureYtdlp(ctx context.Context, progress progressFunc) error {
 		cacheDir, _ := ytdlp.GetCacheDir()
 		progress.log("ensuring yt-dlp %s + ffmpeg are available (first run downloads, checksum-verified, into %s)", ytdlp.Version, cacheDir)
 
-		opts := ytdlpInstallOptions()
-		if _, err := ytdlp.Install(ctx, opts); err != nil {
+		if _, err := ytdlp.Install(ctx, ytdlpInstallOptions()); err != nil {
 			ytdlpBootstrapErr = bootstrapError("yt-dlp", cacheDir, err)
 			return
 		}
-		// ffmpeg + ffprobe: YouTube's best quality is separate video+audio
-		// streams that yt-dlp merges with ffmpeg. go-ytdlp adds its cache dir
-		// to the child PATH so yt-dlp finds them.
-		if _, err := ytdlp.InstallFFmpeg(ctx, &ytdlp.InstallFFmpegOptions{}); err != nil {
+		// ffmpeg + ffprobe are NOT optional: YouTube's best quality is
+		// separate video+audio streams that yt-dlp merges with ffmpeg. With
+		// yt-dlp present but ffmpeg absent, yt-dlp silently falls back to a
+		// progressive (≤720p) format — so we provision them here and fail
+		// loudly if we can't, rather than let quality silently degrade.
+		// go-ytdlp adds its cache dir to the child PATH so yt-dlp finds them.
+		ffOpts := ytdlpFFmpegOptions()
+		if _, err := ytdlp.InstallFFmpeg(ctx, ffOpts); err != nil {
 			ytdlpBootstrapErr = bootstrapError("ffmpeg", cacheDir, err)
 			return
 		}
-		if _, err := ytdlp.InstallFFprobe(ctx, &ytdlp.InstallFFmpegOptions{}); err != nil {
+		if _, err := ytdlp.InstallFFprobe(ctx, ffOpts); err != nil {
 			ytdlpBootstrapErr = bootstrapError("ffprobe", cacheDir, err)
 			return
 		}
@@ -456,6 +459,18 @@ func ytdlpInstallOptions() *ytdlp.InstallOptions {
 		// Use whatever yt-dlp is on PATH regardless of version — the
 		// "bring my own / install-latest" path.
 		opts.AllowVersionMismatch = true
+	}
+	return opts
+}
+
+// ytdlpFFmpegOptions mirrors PIPE2_YTDLP_NO_DOWNLOAD for the ffmpeg/ffprobe
+// install so the offline path is consistent: a NO_DOWNLOAD run requires a
+// system ffmpeg and fails loudly if it's missing, instead of silently
+// downloading it (or silently downgrading quality).
+func ytdlpFFmpegOptions() *ytdlp.InstallFFmpegOptions {
+	opts := &ytdlp.InstallFFmpegOptions{}
+	if os.Getenv("PIPE2_YTDLP_NO_DOWNLOAD") != "" {
+		opts.DisableDownload = true
 	}
 	return opts
 }
