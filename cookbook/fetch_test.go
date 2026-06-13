@@ -135,14 +135,49 @@ func TestHTTPDownloadMediaNonMediaBodyFailsLoudly(t *testing.T) {
 }
 
 func TestHTTPDownloadMediaOctetStreamAllowed(t *testing.T) {
+	// octet-stream with real media magic bytes (mp4 ftyp) → sniff says media,
+	// so a CDN that opaquely labels media is accepted.
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Write([]byte("media"))
+		w.Write([]byte("\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom"))
 	}))
 	defer srv.Close()
 
 	if _, err := httpDownloadMedia(context.Background(), srv.URL+"/clip.mp4", t.TempDir(), nil); err != nil {
 		t.Fatalf("octet-stream media should be allowed, got: %v", err)
+	}
+}
+
+func TestHTTPDownloadMediaOctetStreamButHTMLBodySniffsNonMedia(t *testing.T) {
+	// A media-looking URL whose body is HTML mislabeled as octet-stream is
+	// still caught by the byte sniff — returns a *nonMediaError so the caller
+	// can fall back to the extractor.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Write([]byte("<!DOCTYPE html><html><head><title>verify</title></head></html>"))
+	}))
+	defer srv.Close()
+
+	_, err := httpDownloadMedia(context.Background(), srv.URL+"/clip.mp4", t.TempDir(), nil)
+	var nm *nonMediaError
+	if !errors.As(err, &nm) {
+		t.Fatalf("expected *nonMediaError for an HTML body, got %T: %v", err, err)
+	}
+}
+
+func TestHTTPDownloadMediaNonMediaReturnsTypedError(t *testing.T) {
+	// An explicit text/html content-type must be a *nonMediaError (misroute),
+	// not a hard error — so fetchRemoteSource knows to retry via the extractor.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte("<html></html>"))
+	}))
+	defer srv.Close()
+
+	_, err := httpDownloadMedia(context.Background(), srv.URL+"/clip.mp4", t.TempDir(), nil)
+	var nm *nonMediaError
+	if !errors.As(err, &nm) {
+		t.Fatalf("expected *nonMediaError, got %T: %v", err, err)
 	}
 }
 
@@ -187,18 +222,58 @@ func TestFetchRemoteSourceCleansUpTempDirOnSuccess(t *testing.T) {
 	}
 }
 
-func TestYtdlpMissingGivesActionableError(t *testing.T) {
-	// Force yt-dlp to be unfindable so we exercise the missing-dependency
-	// branch deterministically regardless of the host.
+// isolateYtdlpBootstrap forces a deterministic, network-free bootstrap
+// failure: an empty PATH (no system yt-dlp), an isolated empty cache dir,
+// and PIPE2_YTDLP_NO_DOWNLOAD so Install never reaches GitHub.
+func isolateYtdlpBootstrap(t *testing.T) {
+	t.Helper()
 	t.Setenv("PATH", "")
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	t.Setenv("PIPE2_YTDLP_NO_DOWNLOAD", "1")
+}
+
+func TestYtdlpBootstrapFailureGivesActionableError(t *testing.T) {
+	isolateYtdlpBootstrap(t)
 	_, err := ytdlpDownload(context.Background(), "https://www.youtube.com/watch?v=abc", t.TempDir(), nil)
 	if err == nil {
-		t.Fatal("expected error when yt-dlp is absent")
+		t.Fatal("expected a bootstrap error when yt-dlp can't be installed")
 	}
-	if !strings.Contains(err.Error(), "yt-dlp") {
+	msg := err.Error()
+	if !strings.Contains(msg, "yt-dlp") {
 		t.Fatalf("error should name yt-dlp, got: %v", err)
 	}
-	if !strings.Contains(err.Error(), "Install") {
-		t.Fatalf("error should be actionable (mention install), got: %v", err)
+	// Actionable: names the cache dir and the env opt-outs, not a stack trace.
+	for _, want := range []string{"bootstrap", "PIPE2_YTDLP_SYSTEM", "PIPE2_YTDLP_NO_DOWNLOAD"} {
+		if !strings.Contains(msg, want) {
+			t.Errorf("error should mention %q to be actionable, got: %v", want, err)
+		}
+	}
+}
+
+func TestFetchRemoteSource_DirectMisrouteFallsBackToExtractor(t *testing.T) {
+	isolateYtdlpBootstrap(t)
+	// A media-looking URL that actually serves an HTML page. The direct path
+	// must NOT surface this as a media file; it falls back to the extractor,
+	// which here fails to bootstrap — proving the fallback was taken (rather
+	// than the nonMediaError leaking out, or an HTML file being uploaded).
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte("<html><body>captcha</body></html>"))
+	}))
+	defer srv.Close()
+
+	_, cleanup, err := fetchRemoteSource(context.Background(), srv.URL+"/clip.mp4", nil)
+	cleanup()
+	if err == nil {
+		t.Fatal("expected an error (extractor fallback can't bootstrap here)")
+	}
+	var sfe *SourceFetchError
+	if !errors.As(err, &sfe) {
+		t.Fatalf("expected *SourceFetchError, got %T: %v", err, err)
+	}
+	// The surfaced error is the extractor bootstrap failure, confirming the
+	// misroute fell through to yt-dlp rather than returning the raw HTML body.
+	if !strings.Contains(err.Error(), "bootstrap") {
+		t.Fatalf("expected the extractor-fallback bootstrap error, got: %v", err)
 	}
 }

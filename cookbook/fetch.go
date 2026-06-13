@@ -1,6 +1,7 @@
 package cookbook
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -8,10 +9,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
+
+	ytdlp "github.com/lrstanley/go-ytdlp"
 )
 
 // Source ingestion lives here. The platform never fetches external URLs
@@ -152,10 +155,19 @@ func (p progressFunc) log(format string, args ...any) {
 // and is safe to call even on error — callers defer it unconditionally so
 // the temp bytes never leak, on success or failure.
 //
-// Direct media links (a URL whose path ends in a media extension) are
-// fetched over plain HTTP; everything else is handed to yt-dlp, which
-// resolves streaming/social pages (YouTube, Vimeo, TikTok, …) to an actual
-// stream. Any failure is wrapped in *SourceFetchError.
+// Two paths, with a safety net:
+//   - A direct media link (URL path ends in a media extension) is streamed
+//     over plain HTTP — the fast path.
+//   - Everything else goes to the yt-dlp extractor (YouTube, Vimeo, TikTok,
+//     …), which can merge separate video+audio streams via ffmpeg.
+//
+// The routing is a heuristic, not a contract: if the "direct" fast path
+// turns out to serve a non-media body (an HTML consent/error page behind a
+// media-looking URL), we fall back to the extractor rather than letting the
+// misroute resurface downstream as `ffprobe: Invalid data`. A genuine
+// transport failure (a 403, a network error) is NOT retried via the
+// extractor — same egress, same result — and surfaces as a clean error.
+// Any failure is wrapped in *SourceFetchError.
 func fetchRemoteSource(ctx context.Context, rawURL string, progress progressFunc) (path string, cleanup func(), err error) {
 	dir, err := os.MkdirTemp("", "pipe2-fetch-")
 	if err != nil {
@@ -165,6 +177,14 @@ func fetchRemoteSource(ctx context.Context, rawURL string, progress progressFunc
 
 	if isDirectMediaURL(rawURL) {
 		path, err = httpDownloadMedia(ctx, rawURL, dir, progress)
+		// Misroute recovery: the URL looked direct but served non-media.
+		// The non-media check happens before any file is written, so dir is
+		// clean for the extractor to write into.
+		var nm *nonMediaError
+		if errors.As(err, &nm) {
+			progress.log("direct link served non-media content (%s); falling back to the yt-dlp extractor", nm.contentType)
+			path, err = ytdlpDownload(ctx, rawURL, dir, progress)
+		}
 	} else {
 		path, err = ytdlpDownload(ctx, rawURL, dir, progress)
 	}
@@ -175,6 +195,19 @@ func fetchRemoteSource(ctx context.Context, rawURL string, progress progressFunc
 	return path, cleanup, nil
 }
 
+// nonMediaError marks a "direct" fetch that returned a successful HTTP
+// response whose body is not media (typically an HTML consent/error page).
+// fetchRemoteSource treats it as a misroute and retries via the extractor,
+// so it must be distinguishable from a hard transport failure.
+type nonMediaError struct {
+	url         string
+	contentType string
+}
+
+func (e *nonMediaError) Error() string {
+	return fmt.Sprintf("%s returned non-media content (%s) — looks like a web page, not a video/audio file", e.url, e.contentType)
+}
+
 // browserUA is sent on direct-media GETs. Some CDNs 403 a default Go
 // User-Agent (the worker's egress saw exactly this); a normal browser UA
 // gets the public object.
@@ -182,10 +215,16 @@ const browserUA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
 	"(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
 // httpDownloadMedia GETs a direct media URL into dir and returns the saved
-// path. It fails loudly — and correctly — on the two cases that used to
-// reach ffprobe as garbage: a non-2xx status, and a 200 whose body is not
-// media (an HTML consent/error page). Redirects are followed by the
-// stdlib client.
+// path. It fails loudly — and correctly — on the cases that used to reach
+// ffprobe as garbage:
+//   - a non-2xx status → a hard transport error (no extractor retry)
+//   - a 2xx whose body is not media → a *nonMediaError, which the caller
+//     recovers by falling back to the extractor
+//
+// A blank or application/octet-stream content-type is tolerated (plenty of
+// valid CDNs serve media that way), but the first bytes are sniffed in that
+// case so an HTML page mislabeled as octet-stream is still caught. Redirects
+// are followed by the stdlib client.
 func httpDownloadMedia(ctx context.Context, rawURL, dir string, progress progressFunc) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
@@ -205,16 +244,29 @@ func httpDownloadMedia(ctx context.Context, rawURL, dir string, progress progres
 		return "", fmt.Errorf("%s returned HTTP %d", rawURL, resp.StatusCode)
 	}
 
-	// Content-type guardrail: a 200 with text/html is the consent/error
-	// page trap. Reject anything that isn't media so ffprobe never sees a
-	// non-media body. application/octet-stream is allowed — plenty of CDNs
-	// serve media that way and the path extension already told us it's media.
-	ct := strings.ToLower(strings.TrimSpace(resp.Header.Get("Content-Type")))
-	if i := strings.Index(ct, ";"); i >= 0 {
-		ct = strings.TrimSpace(ct[:i])
-	}
-	if !isMediaContentType(ct) {
-		return "", fmt.Errorf("%s returned non-media content-type %q (expected a video/audio file, got what looks like a web page)", rawURL, ct)
+	ct := normalizeContentType(resp.Header.Get("Content-Type"))
+	switch classifyContentType(ct) {
+	case ctMedia:
+		// trusted media header — stream as-is
+	case ctNonMedia:
+		return "", &nonMediaError{url: rawURL, contentType: ct}
+	default: // ctAmbiguous (blank / octet-stream) — sniff the leading bytes
+		head, herr := peek(resp.Body, 512)
+		if herr != nil {
+			return "", fmt.Errorf("read body: %w", herr)
+		}
+		if sniffedNonMedia(head) {
+			label := ct
+			if label == "" {
+				label = "blank content-type"
+			}
+			return "", &nonMediaError{url: rawURL, contentType: label}
+		}
+		// Re-attach the sniffed head in front of the rest of the body.
+		resp.Body = struct {
+			io.Reader
+			io.Closer
+		}{io.MultiReader(bytes.NewReader(head), resp.Body), resp.Body}
 	}
 
 	// Name the temp file after the URL's basename so the uploader can infer
@@ -233,27 +285,63 @@ func httpDownloadMedia(ctx context.Context, rawURL, dir string, progress progres
 	w := &progressWriter{total: resp.ContentLength, progress: progress, label: "download"}
 	if _, err := io.Copy(io.MultiWriter(f, w), resp.Body); err != nil {
 		f.Close()
+		_ = os.Remove(dest) // leave dir clean for a potential extractor fallback
 		return "", fmt.Errorf("download body: %w", err)
 	}
 	if err := f.Close(); err != nil {
+		_ = os.Remove(dest)
 		return "", err
 	}
 	return dest, nil
 }
 
-func isMediaContentType(ct string) bool {
+// normalizeContentType lower-cases a Content-Type header and strips any
+// "; charset=..." parameters.
+func normalizeContentType(raw string) string {
+	ct := strings.ToLower(strings.TrimSpace(raw))
+	if i := strings.Index(ct, ";"); i >= 0 {
+		ct = strings.TrimSpace(ct[:i])
+	}
+	return ct
+}
+
+type contentClass int
+
+const (
+	ctAmbiguous contentClass = iota // blank / octet-stream — needs sniffing
+	ctMedia                         // explicit video/audio/image
+	ctNonMedia                      // explicit text/html, application/json, …
+)
+
+func classifyContentType(ct string) contentClass {
 	switch {
 	case ct == "", ct == "application/octet-stream", ct == "binary/octet-stream":
-		// Unknown/opaque — the path extension already classified this as
-		// media, so accept it rather than reject a legitimately-served file.
-		return true
+		return ctAmbiguous
 	case strings.HasPrefix(ct, "video/"),
 		strings.HasPrefix(ct, "audio/"),
 		strings.HasPrefix(ct, "image/"):
-		return true
+		return ctMedia
 	default:
-		return false
+		return ctNonMedia
 	}
+}
+
+// sniffedNonMedia reports whether a body's leading bytes look like a web
+// page / text rather than media. Used only when the declared content-type
+// is ambiguous (blank / octet-stream).
+func sniffedNonMedia(head []byte) bool {
+	sniffed := normalizeContentType(http.DetectContentType(head))
+	return strings.HasPrefix(sniffed, "text/")
+}
+
+// peek reads up to n bytes from r, tolerating a short read at EOF.
+func peek(r io.Reader, n int) ([]byte, error) {
+	buf := make([]byte, n)
+	read, err := io.ReadFull(r, buf)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return nil, err
+	}
+	return buf[:read], nil
 }
 
 // extForContentType maps a media content type back to a file extension for
@@ -277,40 +365,37 @@ func extForContentType(ct string) string {
 	}
 }
 
-// ytdlpDownload resolves a streaming/social URL to a local file via
-// yt-dlp. yt-dlp is an external dependency: when it isn't on PATH we emit
-// an actionable error (how to install it, or how to side-step it) rather
-// than a stack trace.
+// ytdlpDownload resolves a streaming/social URL to a local file with the
+// yt-dlp extractor, via github.com/lrstanley/go-ytdlp. The yt-dlp + ffmpeg
+// binaries are bootstrapped on first use (checksum-verified download into
+// go-ytdlp's cache); a bootstrap failure surfaces as an actionable error,
+// never a stack trace.
 func ytdlpDownload(ctx context.Context, rawURL, dir string, progress progressFunc) (string, error) {
-	bin, err := exec.LookPath("yt-dlp")
-	if err != nil {
-		return "", fmt.Errorf(
-			"this looks like a streaming/social URL, which needs yt-dlp to resolve, but yt-dlp was not found on PATH.\n" +
-				"  Install it (https://github.com/yt-dlp/yt-dlp#installation), e.g. `pipx install yt-dlp` or `brew install yt-dlp`,\n" +
-				"  or pass a direct media file URL / a local file / an already-uploaded `--asset <id>` instead")
+	if err := ensureYtdlp(ctx, progress); err != nil {
+		return "", err
 	}
 
-	// Output template inside our temp dir; %(ext)s lets yt-dlp pick the
-	// real container. --no-playlist keeps a single-video URL from pulling a
-	// whole playlist. --newline makes progress one-line-per-update so it
-	// streams cleanly to stderr.
-	outTmpl := filepath.Join(dir, "source.%(ext)s")
-	args := []string{
-		"--no-playlist",
-		"--no-progress",
-		"--newline",
-		"--no-color",
-		"-o", outTmpl,
-		rawURL,
-	}
-	cmd := exec.CommandContext(ctx, bin, args...)
-	// yt-dlp diagnostics go to the user's stderr (progress / status), never
-	// to --json stdout.
-	cmd.Stdout = progressSink{progress: progress, label: "yt-dlp"}
-	cmd.Stderr = progressSink{progress: progress, label: "yt-dlp"}
 	progress.log("resolving %s with yt-dlp", rawURL)
-	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("yt-dlp failed for %s: %w (see the yt-dlp output above; the URL may be private, geo-blocked, or need cookies)", rawURL, err)
+	cmd := ytdlp.New().
+		NoPlaylist(). // a single-video URL must not drag in a whole playlist
+		NoColors().
+		Paths(dir).               // download into our temp dir
+		Output("source.%(ext)s"). // yt-dlp picks the real container
+		ProgressFunc(time.Second, func(u ytdlp.ProgressUpdate) {
+			if u.TotalBytes > 0 {
+				progress.log("  yt-dlp %s (%.1f / %.1f MiB)", u.PercentString(),
+					float64(u.DownloadedBytes)/(1<<20), float64(u.TotalBytes)/(1<<20))
+			} else {
+				progress.log("  yt-dlp %s", u.Status)
+			}
+		}).
+		StderrFunc(func(line string) {
+			if s := strings.TrimSpace(line); s != "" {
+				progress.log("  yt-dlp: %s", s)
+			}
+		})
+	if _, err := cmd.Run(ctx, rawURL); err != nil {
+		return "", fmt.Errorf("yt-dlp could not resolve %s: %w (the URL may be private, geo-blocked, age-restricted, or need cookies)", rawURL, err)
 	}
 
 	// yt-dlp chose the extension; find the single file it produced.
@@ -319,6 +404,73 @@ func ytdlpDownload(ctx context.Context, rawURL, dir string, progress progressFun
 		return "", fmt.Errorf("yt-dlp reported success but %w", err)
 	}
 	return produced, nil
+}
+
+// ytdlpBootstrap memoizes the one-time install of yt-dlp + ffmpeg so
+// concurrent clip fan-out doesn't race (and doesn't repeat the log line).
+var (
+	ytdlpBootstrapOnce sync.Once
+	ytdlpBootstrapErr  error
+)
+
+// ensureYtdlp makes sure yt-dlp + ffmpeg/ffprobe are available, downloading
+// them (checksum-verified, into go-ytdlp's cache) on first use. The pinned
+// version is whatever the go-ytdlp module ships (ytdlp.Version); bump the
+// dependency to move it. Env opt-outs:
+//
+//	PIPE2_YTDLP_SYSTEM=1       use a yt-dlp already on PATH, any version
+//	                           (bring-your-own / install-latest path)
+//	PIPE2_YTDLP_NO_DOWNLOAD=1  never download; require a system install
+func ensureYtdlp(ctx context.Context, progress progressFunc) error {
+	ytdlpBootstrapOnce.Do(func() {
+		cacheDir, _ := ytdlp.GetCacheDir()
+		progress.log("ensuring yt-dlp %s + ffmpeg are available (first run downloads, checksum-verified, into %s)", ytdlp.Version, cacheDir)
+
+		opts := ytdlpInstallOptions()
+		if _, err := ytdlp.Install(ctx, opts); err != nil {
+			ytdlpBootstrapErr = bootstrapError("yt-dlp", cacheDir, err)
+			return
+		}
+		// ffmpeg + ffprobe: YouTube's best quality is separate video+audio
+		// streams that yt-dlp merges with ffmpeg. go-ytdlp adds its cache dir
+		// to the child PATH so yt-dlp finds them.
+		if _, err := ytdlp.InstallFFmpeg(ctx, &ytdlp.InstallFFmpegOptions{}); err != nil {
+			ytdlpBootstrapErr = bootstrapError("ffmpeg", cacheDir, err)
+			return
+		}
+		if _, err := ytdlp.InstallFFprobe(ctx, &ytdlp.InstallFFmpegOptions{}); err != nil {
+			ytdlpBootstrapErr = bootstrapError("ffprobe", cacheDir, err)
+			return
+		}
+	})
+	return ytdlpBootstrapErr
+}
+
+func ytdlpInstallOptions() *ytdlp.InstallOptions {
+	opts := &ytdlp.InstallOptions{}
+	if os.Getenv("PIPE2_YTDLP_NO_DOWNLOAD") != "" {
+		// Air-gapped / sandboxed: require a system yt-dlp, never reach out.
+		opts.DisableDownload = true
+	}
+	if os.Getenv("PIPE2_YTDLP_SYSTEM") != "" {
+		// Use whatever yt-dlp is on PATH regardless of version — the
+		// "bring my own / install-latest" path.
+		opts.AllowVersionMismatch = true
+	}
+	return opts
+}
+
+// bootstrapError turns a go-ytdlp install failure into an actionable
+// message: where the cache lives, why it might have failed (offline,
+// sandboxed, checksum mismatch), and the env opt-outs.
+func bootstrapError(tool, cacheDir string, err error) error {
+	return fmt.Errorf(
+		"could not bootstrap %s (auto-installed, checksum-verified, into %s): %w\n"+
+			"  This first-run download needs network access to GitHub. If this host is offline or sandboxed, "+
+			"install yt-dlp + ffmpeg yourself and set PIPE2_YTDLP_SYSTEM=1 to use the ones on PATH "+
+			"(or PIPE2_YTDLP_NO_DOWNLOAD=1 to require a system install and skip the download). "+
+			"A checksum mismatch usually means a corrupted or interrupted download — retry, or delete the cache dir above and try again",
+		tool, cacheDir, err)
 }
 
 // singleFileIn returns the sole regular file in dir. yt-dlp writes exactly
@@ -371,20 +523,4 @@ func (w *progressWriter) Write(p []byte) (int, error) {
 		}
 	}
 	return n, nil
-}
-
-// progressSink adapts a child process's output stream to the progress
-// logger, one line at a time.
-type progressSink struct {
-	progress progressFunc
-	label    string
-}
-
-func (s progressSink) Write(p []byte) (int, error) {
-	for _, line := range strings.Split(strings.TrimRight(string(p), "\n"), "\n") {
-		if strings.TrimSpace(line) != "" {
-			s.progress.log("  %s: %s", s.label, line)
-		}
-	}
-	return len(p), nil
 }

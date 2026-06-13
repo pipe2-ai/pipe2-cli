@@ -60,7 +60,7 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 	// knobs → quality knobs → branding.
 	inputs := []cookbook.Input{
 		{Name: "source", Type: cookbook.AssetURL, Required: true, CLIArg: "--input",
-			Description: "Source video — a YouTube/social URL, a direct media URL, a local file, or an existing pipe2 asset (URL / /s3 path / id). Remote URLs are resolved on your machine (yt-dlp for streaming/social, plain HTTP for direct links) and uploaded as an asset; the platform never fetches them server-side. yt-dlp must be installed for streaming/social URLs. Use --asset <id> / --no-fetch to skip the fetch for an already-uploaded asset."},
+			Description: "Source video — a YouTube/social URL, a direct media URL, a local file, or an existing pipe2 asset (URL / /s3 path / id). Remote URLs are resolved on your machine (yt-dlp for streaming/social, plain HTTP for direct links) and uploaded as an asset; the platform never fetches them server-side. yt-dlp + ffmpeg are auto-installed on first use (checksum-verified); set PIPE2_YTDLP_SYSTEM=1 to use ones already on PATH. Use --asset <id> / --no-fetch to skip the fetch for an already-uploaded asset."},
 		{Name: "clips", Type: cookbook.String, Default: "", CLIArg: "--clips",
 			Description: `Optional path to a JSON file overriding the auto-picker, shaped [{"context": "...", "start_sec": 42.5, "end_sec": 78.0}, ...]. When set, the highlights step is skipped. Leave empty to let the highlights pipeline pick automatically.`},
 		{Name: "highlights_count", Type: cookbook.Int, Default: int64(5), CLIArg: "--highlights-count",
