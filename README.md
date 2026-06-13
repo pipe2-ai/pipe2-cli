@@ -60,8 +60,29 @@ command runs a whole chain (e.g. long-form video → captioned shorts).
 pipe2 recipe list                       # recipes shipped in this binary
 pipe2 recipe info clip-factory          # manifest: chain, inputs, samples
 pipe2 recipe run clip-factory --input ./talk.mp4 --reformat 9:16
+pipe2 recipe run clip-factory --input https://youtube.com/watch?v=… --highlights-count 3
 pipe2 recipe run clip-factory --input ./talk.mp4 --dry-run --estimate
 ```
+
+### Source media (`--input`)
+
+The `--input` of a media recipe can be a **local file**, a **direct media
+URL**, a **streaming/social URL** (YouTube, Vimeo, TikTok, …), or an
+**existing pipe2 asset** (its URL, `/s3/...` path, or id). The platform
+never fetches external URLs server-side, so the CLI resolves a remote
+`--input` **on your machine**: it downloads the media (yt-dlp for
+streaming/social, plain HTTP for direct links), uploads it as a pipe2
+asset, and hands the recipe only the asset URL. A failed fetch (a 403, or
+an HTML page where media was expected) stops with a clear
+`source fetch failed` error rather than a confusing downstream probe error.
+
+- **`yt-dlp` is required** for streaming/social URLs. Install it with
+  `pipx install yt-dlp` / `brew install yt-dlp` (see
+  [yt-dlp installation](https://github.com/yt-dlp/yt-dlp#installation)).
+  Direct media URLs and local files don't need it.
+- Already uploaded the source? Skip the download/upload with
+  `--asset <id>` (or `--no-fetch`, which passes the source input through to
+  the backend verbatim).
 
 Add `--capture-to ./out` to save every step's artifact, then
 `pipe2 recipe download --from ./out` to pull them locally. Asset paths

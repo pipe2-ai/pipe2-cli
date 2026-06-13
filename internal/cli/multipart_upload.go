@@ -30,9 +30,10 @@ type partResult struct {
 	Err        error
 }
 
-// runMultipartUpload drives the chunked upload flow: request → fan-out →
-// complete (or abort on failure / signal). On Ctrl-C the in-progress
-// upload is aborted cleanly so we don't leak orphan part objects.
+// runMultipartUpload drives the chunked upload from `pipe2 assets upload`
+// and prints the registered asset. The actual work lives in
+// multipartUploadAsset so the recipe uploader can reuse it and get the URL
+// back instead of printing.
 func runMultipartUpload(
 	ctx context.Context,
 	client graphql.Client,
@@ -42,6 +43,27 @@ func runMultipartUpload(
 	partSize int64,
 	parallel int,
 ) error {
+	asset, err := multipartUploadAsset(ctx, client, path, contentType, totalSize, tags, partSize, parallel)
+	if err != nil {
+		return err
+	}
+	return Out(asset)
+}
+
+// multipartUploadAsset drives the chunked upload flow: request → fan-out →
+// complete (or abort on failure / signal). On Ctrl-C the in-progress
+// upload is aborted cleanly so we don't leak orphan part objects. Returns
+// the registered asset (Url, Id, …) so callers can either print it or pass
+// the URL onward.
+func multipartUploadAsset(
+	ctx context.Context,
+	client graphql.Client,
+	path, contentType string,
+	totalSize int64,
+	tags []string,
+	partSize int64,
+	parallel int,
+) (*pipe2.CompleteMultipartUploadComplete_multipart_uploadCreate_asset_output, error) {
 	if partSize <= 0 {
 		partSize = defaultMultipartPartSize
 	}
@@ -77,7 +99,7 @@ func runMultipartUpload(
 	partSizeReq := partSize
 	presign, err := pipe2.RequestMultipartUpload(uploadCtx, client, filepath.Base(path), contentType, totalSize, &partSizeReq)
 	if err != nil {
-		return classifyAPIError(err)
+		return nil, classifyAPIError(err)
 	}
 	res := presign.Request_multipart_upload
 	if int(res.Part_size) != int(partSize) {
@@ -86,7 +108,7 @@ func runMultipartUpload(
 		partCount = int((totalSize + partSize - 1) / partSize)
 	}
 	if len(res.Part_urls) != partCount {
-		return &ExitError{Code: ExitGeneric, Err: fmt.Errorf(
+		return nil, &ExitError{Code: ExitGeneric, Err: fmt.Errorf(
 			"server returned %d part URLs but %d parts expected", len(res.Part_urls), partCount,
 		)}
 	}
@@ -106,11 +128,11 @@ func runMultipartUpload(
 	// 2. Fan-out part PUTs. Bounded worker pool: at most `parallel` PUTs
 	//    in flight at any moment, regardless of how many total parts.
 	type job struct {
-		index   int    // 0-based, used to index into res.Part_urls
-		number  int32  // 1-based, S3 convention
-		offset  int64
-		length  int64
-		url     string
+		index  int   // 0-based, used to index into res.Part_urls
+		number int32 // 1-based, S3 convention
+		offset int64
+		length int64
+		url    string
 	}
 
 	jobs := make(chan job)
@@ -221,9 +243,9 @@ func runMultipartUpload(
 		// If the failure was from cancellation, surface that as the
 		// dominant error — easier for the user to recognize "I hit Ctrl-C".
 		if errors.Is(firstErr, context.Canceled) {
-			return &ExitError{Code: ExitGeneric, Err: errors.New("upload canceled")}
+			return nil, &ExitError{Code: ExitGeneric, Err: errors.New("upload canceled")}
 		}
-		return &ExitError{Code: ExitGeneric, Err: firstErr}
+		return nil, &ExitError{Code: ExitGeneric, Err: firstErr}
 	}
 
 	// 4. Complete. Sort parts by number — S3's CompleteMultipartUpload
@@ -242,9 +264,9 @@ func runMultipartUpload(
 	resp, err := pipe2.CompleteMultipartUpload(uploadCtx, client, res.Upload_id, res.Key, contentType, parts, tags)
 	if err != nil {
 		abortOnFail()
-		return classifyAPIError(err)
+		return nil, classifyAPIError(err)
 	}
-	return Out(resp.Complete_multipart_upload)
+	return &resp.Complete_multipart_upload, nil
 }
 
 // putPart streams one part's bytes to its presigned URL. Returns the

@@ -433,9 +433,11 @@ pipe2 recipe pipe2 recipe run <slug> [--<input> <value> ...] [flags]
 
 **Flags:**
 
+- `--asset` (`string`) — shortcut for an already-uploaded source asset: equivalent to setting the recipe's `source` input to <id-or-url> with --no-fetch
 - `--capture-to` (`string`) — directory where Capture writes per-step artifacts (used by the asset-production pipeline)
 - `--dry-run` (`bool`) — resolve inputs and log the chain that would run, but skip dispatch (no credits charged, no auth required)
 - `--estimate` (`bool`) — fetch credit cost for each step via the API and print a running total (composes with --dry-run for a no-spend cost preview; requires auth)
+- `--no-fetch` (`bool`) — treat every source input as an already-uploaded asset reference (URL / id / /s3 path) and pass it through verbatim — skip the client-side download + upload of remote URLs
 - `--resume` (`bool`) — reuse step outputs recorded in <capture-to>/state.json from a prior run; only steps not yet recorded are dispatched
 
 ### `pipe2 runs`

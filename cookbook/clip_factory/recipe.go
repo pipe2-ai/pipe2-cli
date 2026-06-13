@@ -60,7 +60,7 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 	// knobs → quality knobs → branding.
 	inputs := []cookbook.Input{
 		{Name: "source", Type: cookbook.AssetURL, Required: true, CLIArg: "--input",
-			Description: "Source video URL or local path. Local files are auto-uploaded."},
+			Description: "Source video — a YouTube/social URL, a direct media URL, a local file, or an existing pipe2 asset (URL / /s3 path / id). Remote URLs are resolved on your machine (yt-dlp for streaming/social, plain HTTP for direct links) and uploaded as an asset; the platform never fetches them server-side. yt-dlp must be installed for streaming/social URLs. Use --asset <id> / --no-fetch to skip the fetch for an already-uploaded asset."},
 		{Name: "clips", Type: cookbook.String, Default: "", CLIArg: "--clips",
 			Description: `Optional path to a JSON file overriding the auto-picker, shaped [{"context": "...", "start_sec": 42.5, "end_sec": 78.0}, ...]. When set, the highlights step is skipped. Leave empty to let the highlights pipeline pick automatically.`},
 		{Name: "highlights_count", Type: cookbook.Int, Default: int64(5), CLIArg: "--highlights-count",
@@ -140,7 +140,10 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 }
 
 func (r *Recipe) Run(ctx *cookbook.Context) error {
-	source := ctx.ResolveAssetURL("source")
+	source, err := ctx.ResolveSourceURL("source")
+	if err != nil {
+		return err
+	}
 	clipsPath := ctx.Inputs.String("clips")
 
 	// Corrections parsed up-front so a malformed --corrections flag

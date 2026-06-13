@@ -133,9 +133,28 @@ type Context struct {
 	// storageURL is the asset-storage base. Pipeline outputs come back
 	// as "/s3/..." paths; Capture resolves them against this before
 	// downloading. Empty disables resolution — a relative URL then
-	// fails the fetch loudly instead of guessing a host.
+	// fails the fetch loudly instead of guessing a host. It also tells
+	// ResolveSourceURL which http(s) inputs are our own already-uploaded
+	// assets (same host) versus third-party URLs to fetch.
 	storageURL string
+
+	// noFetch is the --no-fetch / --asset escape hatch. When true,
+	// ResolveSourceURL treats the source as an asset reference the caller
+	// has already uploaded and passes it through verbatim — no client-side
+	// download, no upload.
+	noFetch bool
+
+	// fetcher resolves a remote source URL to a local temp file. Defaults
+	// to fetchRemoteSource (yt-dlp / plain HTTP); tests inject a stub via
+	// WithFetcher so source resolution doesn't touch the network.
+	fetcher remoteFetcher
 }
+
+// remoteFetcher downloads rawURL to a local temp file and returns the path
+// plus a cleanup func (always non-nil, safe to call on error). It is the
+// seam ResolveSourceURL uses for the remote-URL path; fetchRemoteSource is
+// the production implementation.
+type remoteFetcher func(ctx context.Context, rawURL string, progress progressFunc) (path string, cleanup func(), err error)
 
 // ResumeState is the on-disk form of recipe progress. Written to
 // <captureDir>/state.json after every successful pipeline dispatch.
@@ -181,13 +200,25 @@ func NewContext(ctx context.Context, client Client, inputs map[string]any, opts 
 // load-bearing goes through the constructor's required parameters.
 type ContextOption func(*Context)
 
-func WithCaptureDir(dir string) ContextOption  { return func(c *Context) { c.captureDir = dir } }
-func WithStdout(w io.Writer) ContextOption     { return func(c *Context) { c.stdout = w } }
-func WithStderr(w io.Writer) ContextOption     { return func(c *Context) { c.stderr = w } }
+func WithCaptureDir(dir string) ContextOption { return func(c *Context) { c.captureDir = dir } }
+func WithStdout(w io.Writer) ContextOption    { return func(c *Context) { c.stdout = w } }
+func WithStderr(w io.Writer) ContextOption    { return func(c *Context) { c.stderr = w } }
 
 // WithStorageURL sets the asset-storage base so Capture can resolve
 // "/s3/..." pipeline-output paths into fetchable URLs.
 func WithStorageURL(url string) ContextOption { return func(c *Context) { c.storageURL = url } }
+
+// WithNoFetch enables the --no-fetch escape hatch: ResolveSourceURL treats
+// the source as an already-uploaded asset reference and passes it through
+// verbatim, skipping the client-side download + upload. Used by
+// `pipe2 recipe run --no-fetch` and `--asset <id>`.
+func WithNoFetch(on bool) ContextOption { return func(c *Context) { c.noFetch = on } }
+
+// WithFetcher overrides the remote-source fetcher used by ResolveSourceURL.
+// Production code leaves this unset (the default yt-dlp / HTTP fetcher
+// applies); tests inject a stub so source resolution never touches the
+// network.
+func WithFetcher(f remoteFetcher) ContextOption { return func(c *Context) { c.fetcher = f } }
 
 // WithResume enables resume mode for the context. The runner loads
 // state.json from captureDir (must be set) and feeds it in; subsequent
@@ -318,13 +349,13 @@ func summariseDryInput(v any) string {
 func dryStubOutput(idx int) map[string]any {
 	placeholder := fmt.Sprintf("dry://step-%d", idx)
 	return map[string]any{
-		"image_url":     placeholder,
-		"video_url":     placeholder,
-		"audio_url":     placeholder,
-		"result_url":    placeholder,
-		"transcript":    placeholder,
+		"image_url":      placeholder,
+		"video_url":      placeholder,
+		"audio_url":      placeholder,
+		"result_url":     placeholder,
+		"transcript":     placeholder,
 		"transcript_url": placeholder,
-		"subtitle_url":  placeholder,
+		"subtitle_url":   placeholder,
 	}
 }
 
@@ -562,8 +593,8 @@ func LoadResumeState(captureDir string) (*ResumeState, error) {
 // RunOption configures a single RunPipeline call.
 type RunOption func(*runOpts)
 type runOpts struct {
-	timeout     time.Duration
-	whatItDoes  string
+	timeout    time.Duration
+	whatItDoes string
 }
 
 // WithStepTimeout overrides the default 15-min wait timeout for one
@@ -701,10 +732,10 @@ func (c *genqlientClient) RunPipeline(ctx context.Context, slug string, input js
 }
 
 var terminalStatuses = map[string]bool{
-	"completed":  true,
-	"failed":     true,
-	"cancelled":  true,
-	"timed_out":  true,
+	"completed": true,
+	"failed":    true,
+	"cancelled": true,
+	"timed_out": true,
 }
 
 func (c *genqlientClient) WaitRun(ctx context.Context, runID string, timeout time.Duration) (*RunRow, error) {
