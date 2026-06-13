@@ -41,7 +41,7 @@ It is designed to be invoked by both humans and AI agents:
 	root.PersistentFlags().BoolVar(&Globals.JSON, "json", false,
 		"emit JSON to stdout instead of human-readable text")
 	root.PersistentFlags().StringVar(&Globals.ConfigPath, "config", "",
-		"path to config file (default: $XDG_CONFIG_HOME/pipe2/config.toml)")
+		"path to config file (default: $XDG_CONFIG_HOME/pipe2/config.json)")
 	root.PersistentFlags().StringVar(&Globals.APIURL, "api-url", "",
 		"override API base URL (env: PIPE2_API_URL)")
 	root.PersistentFlags().StringVar(&Globals.Token, "token", "",

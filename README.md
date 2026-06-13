@@ -51,6 +51,23 @@ pipe2 assets delete $ASSET_ID
 pipe2 credits balance --json
 ```
 
+## Recipes
+
+Recipes are typed multi-step pipelines compiled into the binary — one
+command runs a whole chain (e.g. long-form video → captioned shorts).
+
+```bash
+pipe2 recipe list                       # recipes shipped in this binary
+pipe2 recipe info clip-factory          # manifest: chain, inputs, samples
+pipe2 recipe run clip-factory --input ./talk.mp4 --reformat 9:16
+pipe2 recipe run clip-factory --input ./talk.mp4 --dry-run --estimate
+```
+
+Add `--capture-to ./out` to save every step's artifact, then
+`pipe2 recipe download --from ./out` to pull them locally. Asset paths
+resolve against the storage base — set it once with
+`pipe2 auth login --storage-url ...` or per-call via `$PIPE2_STORAGE_URL`.
+
 ## Schema introspection
 
 ```bash
@@ -86,11 +103,11 @@ and slash commands via the Claude Code plugin system.
 
 ## Configuration
 
-| Source     | Variable / flag                                            |
-|------------|------------------------------------------------------------|
-| flag       | `--token`, `--api-url`, `--config`                         |
-| env        | `PIPE2_TOKEN`, `PIPE2_API_URL`, `XDG_CONFIG_HOME`          |
-| file       | `$XDG_CONFIG_HOME/pipe2/config.json` (mode 0600)           |
+| Source     | Variable / flag                                                  |
+|------------|------------------------------------------------------------------|
+| flag       | `--token`, `--api-url`, `--storage-url`, `--config`              |
+| env        | `PIPE2_TOKEN`, `PIPE2_API_URL`, `PIPE2_STORAGE_URL`, `XDG_CONFIG_HOME` |
+| file       | `$XDG_CONFIG_HOME/pipe2/config.json` (mode 0600)                 |
 
 Resolution order: flag > env > file > built-in default.
 

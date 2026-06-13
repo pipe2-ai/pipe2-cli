@@ -37,11 +37,11 @@ for the one-time setup (repo creation, PAT, secret) and troubleshooting.
 ## Manual fallback (if CI is down)
 
 ```bash
-# 1. Verify the CLI is clean locally.
+# 1. Verify the CLI is clean locally (mirrors the build-pipe2-cli CI job).
 cd packages/pipe2-cli
-make docs-cli-codegen
-go run ./cmd/gen-agent-md
-go test ./...
+go run ./cmd/gen-agent-md && git diff --exit-code AGENT.md      # AGENT.md drift
+go run ./cmd/regen-cookbook ../.. && git diff --exit-code cookbook  # recipe.json drift
+go vet ./... && go test ./...
 cd ../..
 
 # 2. File-copy mirror into a local clone of the public repo.
@@ -70,17 +70,20 @@ GITHUB_TOKEN=$PAT HOMEBREW_TAP_TOKEN=$PAT goreleaser release --clean
 
 ## Source of truth
 
-Every file at the root of the public repo is generated from code in
-this directory:
+Some root files are hand-written, others are generated from the live
+cobra command tree and the Go cookbook source:
 
-| File                                  | Source                                      | Regen command                |
-|---------------------------------------|---------------------------------------------|------------------------------|
-| `AGENT.md`                            | cobra command tree                          | `go run ./cmd/gen-agent-md`  |
-| `.claude/skills/pipe2-cli/SKILL.md`   | `internal/cli/assets/SKILL.md` (embedded)   | `go run ./cmd/gen-agent-md`  |
-| `.claude-plugin/marketplace.json`     | hand-written, version bumped per release    | edit by hand                 |
-| `README.md`                           | hand-written                                | edit by hand                 |
+| File                                  | Source                                                    | Regen command                |
+|---------------------------------------|-----------------------------------------------------------|------------------------------|
+| `.claude/skills/pipe2-cli/SKILL.md`   | hand-written — the single source for the agent prose      | edit by hand                 |
+| `AGENT.md`                            | `SKILL.md` prose (embedded) + the live cobra command tree | `make pipe2-cli-agent-md`    |
+| `cookbook/*/recipe.json`              | each recipe's Go `Manifest()`                             | `make cookbook-regen`        |
+| `.claude-plugin/marketplace.json`     | hand-written, version bumped per release                  | edit by hand                 |
+| `README.md`                           | hand-written                                              | edit by hand                 |
 
-CI enforces drift — see the `build-pipe2-cli` job in
+`SKILL.md` is `go:embed`'d at the module root (`skillembed.go`) — there
+is no mirrored copy. `AGENT.md` and the per-recipe `recipe.json` files
+are drift-gated in the `build-pipe2-cli` job in
 `.github/workflows/deploy.yml` at the monorepo root.
 
 ## Why subtree split instead of a separate monorepo?

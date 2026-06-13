@@ -54,8 +54,12 @@ func TestAuthUnauthorizedExitCode(t *testing.T) {
 }
 
 // TestPipelinesListReturnsJSON is the "happy path" smoke test for read
-// commands. We don't assert specific pipelines (seeds may evolve) — only
-// that we get an array of objects back.
+// commands. Pipelines are GLOBAL reference data the seed always populates,
+// so against the seeded e2e stack the list must be non-empty — an empty
+// result means a broken seed, a missing Hasura SELECT permission for the
+// CLI's role, or the CLI pointed at an unseeded env, all of which we want
+// CI to catch loudly rather than wave through. We don't assert specific
+// slugs (the catalog evolves), only that we got pipeline objects back.
 func TestPipelinesListReturnsJSON(t *testing.T) {
 	stdout, stderr, code := runCLI(t, "pipelines", "list")
 	if code != 0 {
@@ -64,7 +68,13 @@ func TestPipelinesListReturnsJSON(t *testing.T) {
 	var arr []map[string]any
 	decodeJSON(t, stdout, &arr)
 	if len(arr) == 0 {
-		t.Logf("warning: pipelines list returned empty — seeds may be empty")
+		t.Fatalf("pipelines list returned empty against the seeded stack — "+
+			"pipelines are global reference data and must always be present; "+
+			"suspect the seed step, the Hasura `user` SELECT permission on "+
+			"`pipelines`, or a wrong endpoint/role.\nstdout: %s", stdout)
+	}
+	if _, ok := arr[0]["slug"]; !ok {
+		t.Errorf("pipelines list element missing 'slug': %s", stdout)
 	}
 }
 
