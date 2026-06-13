@@ -39,8 +39,8 @@ for the one-time setup (repo creation, PAT, secret) and troubleshooting.
 ```bash
 # 1. Verify the CLI is clean locally (mirrors the build-pipe2-cli CI job).
 cd packages/pipe2-cli
-go run ./cmd/gen-agent-md && git diff --exit-code AGENT.md      # AGENT.md drift
-go run ./cmd/regen-cookbook ../.. && git diff --exit-code cookbook  # recipe.json drift
+make agent-md-check                                            # AGENT.md drift
+make cookbook-check                                            # recipe.json drift
 go vet ./... && go test ./...
 cd ../..
 
