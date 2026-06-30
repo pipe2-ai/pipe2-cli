@@ -129,7 +129,7 @@
       "type": "asset_url",
       "required": true,
       "cli_arg": "--input",
-      "description": "Source video URL or local path. Local files are auto-uploaded."
+      "description": "Source video — a YouTube/social URL, a direct media URL, a local file, or an existing pipe2 asset (URL / /s3 path / id). Remote URLs are resolved on your machine (yt-dlp for streaming/social, plain HTTP for direct links) and uploaded as an asset; the platform never fetches them server-side. yt-dlp + ffmpeg are auto-installed on first use (checksum-verified); set PIPE2_YTDLP_SYSTEM=1 to use ones already on PATH. Use --asset \u003cid\u003e / --no-fetch to skip the fetch for an already-uploaded asset."
     },
     "watermark_scale_pct": {
       "type": "int",

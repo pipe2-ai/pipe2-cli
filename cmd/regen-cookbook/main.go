@@ -1,10 +1,17 @@
 // regen-cookbook walks the cookbook registry and writes each recipe's
-// Manifest as packages/cookbook/<slug>/recipe.json, plus a refreshed
-// packages/cookbook/index.json. Run via `make cookbook-regen`.
+// Manifest as cookbook/<slug>/recipe.json, plus a refreshed
+// cookbook/index.json. Run via `make cookbook-regen`.
 //
 // The Go source is the source of truth; this tool emits the JSON
 // projection the website's content loader reads. Idempotent — diff
-// against committed JSON to verify drift in CI.
+// against committed JSON to verify drift in CI (`make cookbook-check`).
+//
+// Output is anchored to the module root (the go.mod holding
+// `module github.com/pipe2-ai/pipe2-cli`), exactly like
+// cmd/gen-agent-md. That resolves to packages/pipe2-cli/cookbook in
+// the monorepo and the repo-root cookbook/ in the split-out public
+// repo, so the same tool writes the committed files in both layouts
+// without hardcoding either path.
 package main
 
 import (
@@ -12,18 +19,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
+	"strings"
 
 	"github.com/pipe2-ai/pipe2-cli/cookbook"
 	_ "github.com/pipe2-ai/pipe2-cli/cookbook/all"
 )
 
 func main() {
-	root := "."
-	if len(os.Args) > 1 {
-		root = os.Args[1]
+	modRoot, err := moduleRoot()
+	if err != nil {
+		die("module root: %v", err)
 	}
-	root = filepath.Join(root, "packages", "pipe2-cli", "cookbook")
+	root := filepath.Join(modRoot, "cookbook")
 
 	type indexEntry struct {
 		Slug          string   `json:"slug"`
@@ -109,10 +116,34 @@ func main() {
 		})
 	}
 
+	// generated_at is pinned to the most recent recipe update rather
+	// than wall-clock time.Now(): a wall-clock stamp makes the CI
+	// drift gate (regen + `git diff --exit-code`) fire on every run
+	// as the calendar advances, even when no recipe changed — the
+	// same trap cmd/gen-agent-md and cmd/gen-docs sidestep by dropping
+	// their date stamps. Deriving it from the recipe corpus keeps the
+	// field the web loader reads while making regeneration
+	// byte-deterministic and the drift gate meaningful.
 	idx := map[string]any{
 		"schema_version": cookbook.SchemaVersion,
-		"generated_at":   time.Now().UTC().Format(time.RFC3339),
 		"recipes":        entries,
+	}
+	// Lexical max of the per-recipe updatedAt dates — ISO-8601 dates
+	// sort chronologically as strings. Skipped entirely when no recipe
+	// declares one, so the field never appears as an empty stamp.
+	generatedAt := ""
+	for _, e := range entries {
+		if e.UpdatedAt > generatedAt {
+			generatedAt = e.UpdatedAt
+		}
+	}
+	if generatedAt != "" {
+		// Normalize a date-only stamp (YYYY-MM-DD) to RFC3339 midnight
+		// UTC so the field keeps the timestamp shape the loader expects.
+		if len(generatedAt) == len("2006-01-02") {
+			generatedAt += "T00:00:00Z"
+		}
+		idx["generated_at"] = generatedAt
 	}
 	idxPath := filepath.Join(root, "index.json")
 	idxRaw, _ := json.MarshalIndent(idx, "", "  ")
@@ -123,6 +154,31 @@ func main() {
 }
 
 func die(format string, args ...any) { fmt.Fprintf(os.Stderr, format+"\n", args...); os.Exit(1) }
+
+// moduleRoot walks up from the current working directory until it finds
+// a go.mod containing module github.com/pipe2-ai/pipe2-cli — the same
+// anchor cmd/gen-agent-md uses. It's the repo root after the subtree
+// split (cookbook/ lives beside it) and packages/pipe2-cli/ in the
+// monorepo, so we avoid hardcoding either layout.
+func moduleRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	for {
+		goMod := filepath.Join(dir, "go.mod")
+		if data, err := os.ReadFile(goMod); err == nil {
+			if strings.Contains(string(data), "module github.com/pipe2-ai/pipe2-cli") {
+				return dir, nil
+			}
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf("pipe2-cli go.mod not found in any parent of cwd")
+		}
+		dir = parent
+	}
+}
 func pluralS(n int) string {
 	if n == 1 {
 		return ""

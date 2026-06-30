@@ -92,7 +92,12 @@ func writeClipsJSON(t *testing.T) string {
 func dispatchInputs(t *testing.T, overrides map[string]string) cookbook.Inputs {
 	t.Helper()
 	flags := map[string]string{
-		"--input":    "https://example.com/source.mp4",
+		// An existing-asset reference ("/s3/...") so ResolveSourceURL passes
+		// it straight through — these tests exercise orchestration, not the
+		// remote-fetch path (that's covered by ResolveSourceURL tests and
+		// cookbook/fetch_test.go). A remote URL here would trigger a real
+		// client-side download.
+		"--input":    "/s3/test-bucket/source.mp4",
 		"--preset":   "karaoke-gradient",
 		"--lang":     "en",
 		"--parallel": "1",

@@ -23,21 +23,33 @@ func newPipelinesCmd() *cobra.Command {
 }
 
 func newPipelinesListCmd() *cobra.Command {
-	return &cobra.Command{
+	var limit int
+	var page int
+	c := &cobra.Command{
 		Use:   "list",
-		Short: "List all available pipelines",
+		Short: "List available pipelines",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if page < 1 {
+				return &ExitError{Code: ExitUsage, Err: fmt.Errorf("--page must be >= 1 (got %d)", page)}
+			}
+			if limit < 1 {
+				return &ExitError{Code: ExitUsage, Err: fmt.Errorf("--limit must be >= 1 (got %d)", limit)}
+			}
 			client, err := MustClient()
 			if err != nil {
 				return err
 			}
-			resp, err := pipe2.GetPipelines(cmd.Context(), client)
+			offset := (page - 1) * limit
+			resp, err := pipe2.GetPipelinesList(cmd.Context(), client, &limit, &offset)
 			if err != nil {
 				return classifyAPIError(err)
 			}
 			return Out(resp.Pipelines)
 		},
 	}
+	c.Flags().IntVar(&limit, "limit", 20, "number of pipelines per page")
+	c.Flags().IntVar(&page, "page", 1, "page number (1-based)")
+	return c
 }
 
 func newPipelinesRunCmd() *cobra.Command {

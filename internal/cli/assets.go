@@ -85,6 +85,14 @@ func detectContentType(path, override string) (string, error) {
 			}
 			return strings.TrimSpace(ct), nil
 		}
+		// The system mime table is incomplete on some hosts (no entry for
+		// .mkv / .m4v / .opus, etc.) and http.DetectContentType doesn't know
+		// these containers either — it'd return application/octet-stream and
+		// the upload would be wrongly rejected as non-media. Fall back to a
+		// known media-extension table before sniffing bytes.
+		if ct := mediaTypeByExt[ext]; ct != "" {
+			return ct, nil
+		}
 	}
 	f, err := os.Open(path)
 	if err != nil {
@@ -95,6 +103,29 @@ func detectContentType(path, override string) (string, error) {
 	n, _ := f.Read(buf)
 	ct := http.DetectContentType(buf[:n])
 	return ct, nil
+}
+
+// mediaTypeByExt backstops mime.TypeByExtension for the media containers a
+// hosts's system mime table commonly omits (and that http.DetectContentType
+// can't sniff). Keys are lower-case extensions including the dot.
+var mediaTypeByExt = map[string]string{
+	".mp4":  "video/mp4",
+	".m4v":  "video/mp4",
+	".mov":  "video/quicktime",
+	".webm": "video/webm",
+	".mkv":  "video/x-matroska",
+	".avi":  "video/x-msvideo",
+	".flv":  "video/x-flv",
+	".mpg":  "video/mpeg",
+	".mpeg": "video/mpeg",
+	".ogv":  "video/ogg",
+	".mp3":  "audio/mpeg",
+	".m4a":  "audio/mp4",
+	".wav":  "audio/wav",
+	".aac":  "audio/aac",
+	".flac": "audio/flac",
+	".ogg":  "audio/ogg",
+	".opus": "audio/opus",
 }
 
 func mediaCategory(contentType string) (string, int64, error) {

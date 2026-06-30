@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build + drift gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      # Drift gates: the cookbook JSON projection and AGENT.md are
+      # generated from Go source. Regenerate and fail if the committed
+      # files are stale. index.json is deterministic (generated_at is
+      # pinned to the latest recipe updatedAt, not wall-clock time), so
+      # these only fire on a real source change — never spuriously.
+      - name: Cookbook recipe.json drift
+        run: make cookbook-check
+
+      - name: AGENT.md drift
+        run: make agent-md-check

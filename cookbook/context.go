@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
@@ -126,6 +127,11 @@ type Context struct {
 	// when captureDir is empty (no state to persist).
 	stateFile string
 
+	// stateMu serialises the read-modify-write of state.json. It is a
+	// pointer so Substep/WithContext shallow-copies share ONE lock —
+	// fan-out branches recordStep concurrently into the same file.
+	stateMu *sync.Mutex
+
 	// recipeSlug is needed in state.json so resuming detects when the
 	// user accidentally points --resume at the wrong recipe's state.
 	recipeSlug string
@@ -133,9 +139,28 @@ type Context struct {
 	// storageURL is the asset-storage base. Pipeline outputs come back
 	// as "/s3/..." paths; Capture resolves them against this before
 	// downloading. Empty disables resolution — a relative URL then
-	// fails the fetch loudly instead of guessing a host.
+	// fails the fetch loudly instead of guessing a host. It also tells
+	// ResolveSourceURL which http(s) inputs are our own already-uploaded
+	// assets (same host) versus third-party URLs to fetch.
 	storageURL string
+
+	// noFetch is the --no-fetch / --asset escape hatch. When true,
+	// ResolveSourceURL treats the source as an asset reference the caller
+	// has already uploaded and passes it through verbatim — no client-side
+	// download, no upload.
+	noFetch bool
+
+	// fetcher resolves a remote source URL to a local temp file. Defaults
+	// to fetchRemoteSource (yt-dlp / plain HTTP); tests inject a stub via
+	// WithFetcher so source resolution doesn't touch the network.
+	fetcher remoteFetcher
 }
+
+// remoteFetcher downloads rawURL to a local temp file and returns the path
+// plus a cleanup func (always non-nil, safe to call on error). It is the
+// seam ResolveSourceURL uses for the remote-URL path; fetchRemoteSource is
+// the production implementation.
+type remoteFetcher func(ctx context.Context, rawURL string, progress progressFunc) (path string, cleanup func(), err error)
 
 // ResumeState is the on-disk form of recipe progress. Written to
 // <captureDir>/state.json after every successful pipeline dispatch.
@@ -149,8 +174,14 @@ type ResumeState struct {
 // ResumeStep records one completed pipeline dispatch. RunID lets the
 // user trace what was reused; Output is the structured pipeline output
 // the recipe consumed downstream.
+//
+// Substep is the fan-out branch's prefix (e.g. "substep-2"), empty for the
+// main chain. It is part of the resume key: in a fan-out recipe every clip
+// runs the same step Idx, so keying on Idx alone made every branch reuse the
+// first branch's run on --resume (and clobber each other's state.json entry).
 type ResumeStep struct {
 	Idx      int            `json:"idx"`
+	Substep  string         `json:"substep,omitempty"`
 	Pipeline string         `json:"pipeline"`
 	RunID    string         `json:"run_id"`
 	Output   map[string]any `json:"output"`
@@ -167,6 +198,7 @@ func NewContext(ctx context.Context, client Client, inputs map[string]any, opts 
 		stdout:      os.Stdout,
 		stderr:      os.Stderr,
 		uploadCache: map[string]string{},
+		stateMu:     &sync.Mutex{},
 	}
 	for _, o := range opts {
 		o(c)
@@ -181,13 +213,25 @@ func NewContext(ctx context.Context, client Client, inputs map[string]any, opts 
 // load-bearing goes through the constructor's required parameters.
 type ContextOption func(*Context)
 
-func WithCaptureDir(dir string) ContextOption  { return func(c *Context) { c.captureDir = dir } }
-func WithStdout(w io.Writer) ContextOption     { return func(c *Context) { c.stdout = w } }
-func WithStderr(w io.Writer) ContextOption     { return func(c *Context) { c.stderr = w } }
+func WithCaptureDir(dir string) ContextOption { return func(c *Context) { c.captureDir = dir } }
+func WithStdout(w io.Writer) ContextOption    { return func(c *Context) { c.stdout = w } }
+func WithStderr(w io.Writer) ContextOption    { return func(c *Context) { c.stderr = w } }
 
 // WithStorageURL sets the asset-storage base so Capture can resolve
 // "/s3/..." pipeline-output paths into fetchable URLs.
 func WithStorageURL(url string) ContextOption { return func(c *Context) { c.storageURL = url } }
+
+// WithNoFetch enables the --no-fetch escape hatch: ResolveSourceURL treats
+// the source as an already-uploaded asset reference and passes it through
+// verbatim, skipping the client-side download + upload. Used by
+// `pipe2 recipe run --no-fetch` and `--asset <id>`.
+func WithNoFetch(on bool) ContextOption { return func(c *Context) { c.noFetch = on } }
+
+// WithFetcher overrides the remote-source fetcher used by ResolveSourceURL.
+// Production code leaves this unset (the default yt-dlp / HTTP fetcher
+// applies); tests inject a stub so source resolution never touches the
+// network.
+func WithFetcher(f remoteFetcher) ContextOption { return func(c *Context) { c.fetcher = f } }
 
 // WithResume enables resume mode for the context. The runner loads
 // state.json from captureDir (must be set) and feeds it in; subsequent
@@ -318,13 +362,13 @@ func summariseDryInput(v any) string {
 func dryStubOutput(idx int) map[string]any {
 	placeholder := fmt.Sprintf("dry://step-%d", idx)
 	return map[string]any{
-		"image_url":     placeholder,
-		"video_url":     placeholder,
-		"audio_url":     placeholder,
-		"result_url":    placeholder,
-		"transcript":    placeholder,
+		"image_url":      placeholder,
+		"video_url":      placeholder,
+		"audio_url":      placeholder,
+		"result_url":     placeholder,
+		"transcript":     placeholder,
 		"transcript_url": placeholder,
-		"subtitle_url":  placeholder,
+		"subtitle_url":   placeholder,
 	}
 }
 
@@ -401,7 +445,9 @@ func (c *Context) RunPipeline(slug string, inputs Inputs, opts ...RunOption) (*R
 	// state.json gets rewritten with the new shape.
 	if c.resumeState != nil {
 		for _, s := range c.resumeState.Steps {
-			if s.Idx == stepIdx {
+			// Key on (Idx, Substep): fan-out branches share an Idx, so the
+			// substep prefix is what distinguishes clip 1's step from clip 2's.
+			if s.Idx == stepIdx && s.Substep == c.substepPrefix {
 				if s.Pipeline != slug {
 					c.Logf("↻ %s slug changed (%s → %s); running live, state.json will be rewritten",
 						c.stepHeader(stepIdx, slug, opt.whatItDoes), s.Pipeline, slug)
@@ -486,7 +532,7 @@ func (c *Context) RunPipeline(slug string, inputs Inputs, opts ...RunOption) (*R
 	// Persist the step output to state.json so a subsequent --resume
 	// run can pick up here. Best-effort; a write failure is logged but
 	// doesn't fail the pipeline.
-	if err := c.recordStep(stepIdx, slug, runID, row.Output); err != nil {
+	if err := c.recordStep(stepIdx, c.substepPrefix, slug, runID, row.Output); err != nil {
 		c.Logf("  (state.json write failed: %v — resume won't work for this run)", err)
 	}
 
@@ -496,9 +542,17 @@ func (c *Context) RunPipeline(slug string, inputs Inputs, opts ...RunOption) (*R
 // recordStep appends a successful pipeline dispatch to state.json
 // (creating the file if needed). The file is overwritten atomically
 // via a tmp-rename so a partial write doesn't corrupt the index.
-func (c *Context) recordStep(idx int, slug, runID string, output map[string]any) error {
+//
+// substep is the fan-out branch prefix (empty for the main chain); it is part
+// of the upsert key so parallel branches don't clobber each other's entry.
+// The stateMu serialises the load→upsert→write across those parallel branches.
+func (c *Context) recordStep(idx int, substep, slug, runID string, output map[string]any) error {
 	if c.stateFile == "" {
 		return nil
+	}
+	if c.stateMu != nil {
+		c.stateMu.Lock()
+		defer c.stateMu.Unlock()
 	}
 
 	// Load existing state (if any), then upsert the entry. Idempotent
@@ -510,16 +564,17 @@ func (c *Context) recordStep(idx int, slug, runID string, output map[string]any)
 			state.Recipe = c.recipeSlug
 		}
 	}
+	entry := ResumeStep{Idx: idx, Substep: substep, Pipeline: slug, RunID: runID, Output: output}
 	found := false
 	for i, s := range state.Steps {
-		if s.Idx == idx {
-			state.Steps[i] = ResumeStep{Idx: idx, Pipeline: slug, RunID: runID, Output: output}
+		if s.Idx == idx && s.Substep == substep {
+			state.Steps[i] = entry
 			found = true
 			break
 		}
 	}
 	if !found {
-		state.Steps = append(state.Steps, ResumeStep{Idx: idx, Pipeline: slug, RunID: runID, Output: output})
+		state.Steps = append(state.Steps, entry)
 	}
 
 	raw, err := json.MarshalIndent(state, "", "  ")
@@ -562,8 +617,8 @@ func LoadResumeState(captureDir string) (*ResumeState, error) {
 // RunOption configures a single RunPipeline call.
 type RunOption func(*runOpts)
 type runOpts struct {
-	timeout     time.Duration
-	whatItDoes  string
+	timeout    time.Duration
+	whatItDoes string
 }
 
 // WithStepTimeout overrides the default 15-min wait timeout for one
@@ -701,10 +756,10 @@ func (c *genqlientClient) RunPipeline(ctx context.Context, slug string, input js
 }
 
 var terminalStatuses = map[string]bool{
-	"completed":  true,
-	"failed":     true,
-	"cancelled":  true,
-	"timed_out":  true,
+	"completed": true,
+	"failed":    true,
+	"cancelled": true,
+	"timed_out": true,
 }
 
 func (c *genqlientClient) WaitRun(ctx context.Context, runID string, timeout time.Duration) (*RunRow, error) {

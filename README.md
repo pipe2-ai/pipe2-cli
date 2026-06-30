@@ -60,8 +60,37 @@ command runs a whole chain (e.g. long-form video → captioned shorts).
 pipe2 recipe list                       # recipes shipped in this binary
 pipe2 recipe info clip-factory          # manifest: chain, inputs, samples
 pipe2 recipe run clip-factory --input ./talk.mp4 --reformat 9:16
+pipe2 recipe run clip-factory --input https://youtube.com/watch?v=… --highlights-count 3
 pipe2 recipe run clip-factory --input ./talk.mp4 --dry-run --estimate
 ```
+
+### Source media (`--input`)
+
+The `--input` of a media recipe can be a **local file**, a **direct media
+URL**, a **streaming/social URL** (YouTube, Vimeo, TikTok, …), or an
+**existing pipe2 asset** (its URL, `/s3/...` path, or id). The platform
+never fetches external URLs server-side, so the CLI resolves a remote
+`--input` **on your machine**: it downloads the media (yt-dlp for
+streaming/social, plain HTTP for direct links), uploads it as a pipe2
+asset, and hands the recipe only the asset URL. A failed fetch (a 403, or
+an HTML page where media was expected) stops with a clear
+`source fetch failed` error rather than a confusing downstream probe error.
+
+- **`yt-dlp` + `ffmpeg` power the streaming/social path** and are
+  **auto-installed on first use** — a checksum-verified download into the
+  go-ytdlp cache (`$XDG_CACHE_HOME/go-ytdlp`, or the OS user-cache
+  equivalent). Direct media URLs and local files don't need them.
+  - First-run bootstrap needs network access to GitHub. Offline / sandboxed?
+    Install yt-dlp + ffmpeg yourself and set `PIPE2_YTDLP_SYSTEM=1` to use
+    the ones on `PATH`, or `PIPE2_YTDLP_NO_DOWNLOAD=1` to require a system
+    install and skip the download. A failed bootstrap surfaces an actionable
+    error, not a stack trace.
+  - The yt-dlp version is pinned (and checksum-verified) by the bundled
+    go-ytdlp release; `PIPE2_YTDLP_SYSTEM=1` opts into whatever (newer)
+    yt-dlp you have installed instead.
+- Already uploaded the source? Skip the download/upload with
+  `--asset <id>` (or `--no-fetch`, which passes the source input through to
+  the backend verbatim).
 
 Add `--capture-to ./out` to save every step's artifact, then
 `pipe2 recipe download --from ./out` to pull them locally. Asset paths

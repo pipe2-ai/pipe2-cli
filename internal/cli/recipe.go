@@ -93,6 +93,8 @@ func newRecipeRunCmd() *cobra.Command {
 	var resume bool
 	var dryRun bool
 	var estimate bool
+	var noFetch bool
+	var assetRef string
 	c := &cobra.Command{
 		Use:                "run <slug> [--<input> <value> ...]",
 		Short:              "Execute a recipe end-to-end",
@@ -108,6 +110,19 @@ func newRecipeRunCmd() *cobra.Command {
 			supplied, err := parseDynamicInputs(m, os.Args[1:])
 			if err != nil {
 				return &ExitError{Code: ExitUsage, Err: err}
+			}
+			// --asset <id> is sugar for "the source is this already-uploaded
+			// asset": set the recipe's source input to it and skip the
+			// client-side fetch/upload entirely. It maps to the conventional
+			// `source` input (clip-factory et al.); recipes with differently
+			// named asset inputs use `--<name> <ref> --no-fetch` instead.
+			if assetRef != "" {
+				if !recipeHasInput(m, "source") {
+					return &ExitError{Code: ExitUsage, Err: fmt.Errorf(
+						"--asset sets the `source` input, which %q does not have; pass the asset reference to the recipe's own asset flag together with --no-fetch instead", m.Slug)}
+				}
+				supplied["source"] = assetRef
+				noFetch = true
 			}
 			inputs, err := cookbook.ResolveInputs(m, supplied)
 			if err != nil {
@@ -144,6 +159,9 @@ func newRecipeRunCmd() *cobra.Command {
 			}
 			if estimate {
 				ctxOpts = append(ctxOpts, cookbook.WithEstimate(true))
+			}
+			if noFetch {
+				ctxOpts = append(ctxOpts, cookbook.WithNoFetch(true))
 			}
 			if captureDir != "" {
 				ctxOpts = append(ctxOpts, cookbook.WithCaptureDir(captureDir))
@@ -215,7 +233,23 @@ func newRecipeRunCmd() *cobra.Command {
 		"resolve inputs and log the chain that would run, but skip dispatch (no credits charged, no auth required)")
 	c.Flags().BoolVar(&estimate, "estimate", false,
 		"fetch credit cost for each step via the API and print a running total (composes with --dry-run for a no-spend cost preview; requires auth)")
+	c.Flags().BoolVar(&noFetch, "no-fetch", false,
+		"treat every source input as an already-uploaded asset reference (URL / id / /s3 path) and pass it through verbatim — skip the client-side download + upload of remote URLs")
+	c.Flags().StringVar(&assetRef, "asset", "",
+		"shortcut for an already-uploaded source asset: equivalent to setting the recipe's `source` input to <id-or-url> with --no-fetch")
 	return c
+}
+
+// recipeHasInput reports whether the recipe declares an input with the
+// given Name. Used to validate --asset, which targets the conventional
+// `source` input.
+func recipeHasInput(m cookbook.Manifest, name string) bool {
+	for _, in := range m.Inputs {
+		if in.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 // fmtCreditsMC renders millicredits as a compact credit string for the
