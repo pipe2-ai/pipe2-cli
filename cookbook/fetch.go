@@ -149,6 +149,61 @@ func (p progressFunc) log(format string, args ...any) {
 	}
 }
 
+// SourceFetchOptions tunes the client-side remote fetch — specifically the
+// yt-dlp extractor path. The zero value preserves the default behaviour (no
+// cookies, no extra extractor args). It exists so a user whose IP hits
+// YouTube's "Sign in to confirm you're not a bot" wall can hand yt-dlp a
+// logged-in session: the platform never fetches server-side, so these knobs
+// live on the CLI (`pipe2 recipe run --cookies-from-browser …`).
+type SourceFetchOptions struct {
+	// CookiesFromBrowser is passed to yt-dlp as --cookies-from-browser
+	// (e.g. "chrome", "firefox", "safari", "chrome:Default"). yt-dlp reuses
+	// that browser's logged-in YouTube session, which clears the bot wall.
+	CookiesFromBrowser string
+	// CookiesFile is passed as --cookies <path> — a Netscape cookies.txt
+	// export. The headless/CI alternative to CookiesFromBrowser.
+	CookiesFile string
+	// ExtractorArgs are passed verbatim as repeated --extractor-args values
+	// (e.g. "youtube:player_client=tv"). Power-user escape hatch for
+	// extractor-specific workarounds.
+	ExtractorArgs []string
+}
+
+// applyYtdlpOptions threads SourceFetchOptions onto a go-ytdlp command. Kept
+// separate from ytdlpDownload so it's unit-testable via Command.GetFlagConfig
+// without spawning yt-dlp. Empty fields are skipped, so the zero options value
+// leaves the command exactly as the caller built it.
+func applyYtdlpOptions(cmd *ytdlp.Command, opts SourceFetchOptions) *ytdlp.Command {
+	if opts.CookiesFromBrowser != "" {
+		cmd = cmd.CookiesFromBrowser(opts.CookiesFromBrowser)
+	}
+	if opts.CookiesFile != "" {
+		cmd = cmd.Cookies(opts.CookiesFile)
+	}
+	for _, ea := range opts.ExtractorArgs {
+		if ea != "" {
+			cmd = cmd.ExtractorArgs(ea)
+		}
+	}
+	return cmd
+}
+
+// ytdlpFailureHint is the actionable tail appended to a yt-dlp resolve
+// failure. When the user supplied no cookies, it points them at the flags
+// that clear YouTube's bot/sign-in wall — by far the most common failure on
+// a flagged or datacenter IP. When cookies WERE supplied and it still failed,
+// it says so, so the user doesn't re-add the flag they already passed.
+func ytdlpFailureHint(opts SourceFetchOptions) string {
+	const base = "the URL may be private, geo-blocked, or age-restricted"
+	if opts.CookiesFromBrowser == "" && opts.CookiesFile == "" {
+		return base + `; if it's a "Sign in to confirm you're not a bot" / sign-in wall, ` +
+			"pass --cookies-from-browser <chrome|firefox|safari|edge> (or --cookies <cookies.txt>) " +
+			"so yt-dlp can use a logged-in session"
+	}
+	return base + "; the cookies supplied did not satisfy the extractor " +
+		"(expired, wrong browser profile, or that account isn't logged in)"
+}
+
 // fetchRemoteSource downloads rawURL to a freshly-created temp directory
 // and returns the path to the downloaded file plus a cleanup func that
 // removes the temp directory. The cleanup func is ALWAYS returned non-nil
@@ -159,7 +214,8 @@ func (p progressFunc) log(format string, args ...any) {
 //   - A direct media link (URL path ends in a media extension) is streamed
 //     over plain HTTP — the fast path.
 //   - Everything else goes to the yt-dlp extractor (YouTube, Vimeo, TikTok,
-//     …), which can merge separate video+audio streams via ffmpeg.
+//     …), which can merge separate video+audio streams via ffmpeg. opts
+//     (cookies / extractor args) apply only to this extractor path.
 //
 // The routing is a heuristic, not a contract: if the "direct" fast path
 // turns out to serve a non-media body (an HTML consent/error page behind a
@@ -168,7 +224,7 @@ func (p progressFunc) log(format string, args ...any) {
 // transport failure (a 403, a network error) is NOT retried via the
 // extractor — same egress, same result — and surfaces as a clean error.
 // Any failure is wrapped in *SourceFetchError.
-func fetchRemoteSource(ctx context.Context, rawURL string, progress progressFunc) (path string, cleanup func(), err error) {
+func fetchRemoteSource(ctx context.Context, rawURL string, progress progressFunc, opts SourceFetchOptions) (path string, cleanup func(), err error) {
 	dir, err := os.MkdirTemp("", "pipe2-fetch-")
 	if err != nil {
 		return "", func() {}, &SourceFetchError{URL: rawURL, Err: fmt.Errorf("create temp dir: %w", err)}
@@ -183,10 +239,10 @@ func fetchRemoteSource(ctx context.Context, rawURL string, progress progressFunc
 		var nm *nonMediaError
 		if errors.As(err, &nm) {
 			progress.log("direct link served non-media content (%s); falling back to the yt-dlp extractor", nm.contentType)
-			path, err = ytdlpDownload(ctx, rawURL, dir, progress)
+			path, err = ytdlpDownload(ctx, rawURL, dir, progress, opts)
 		}
 	} else {
-		path, err = ytdlpDownload(ctx, rawURL, dir, progress)
+		path, err = ytdlpDownload(ctx, rawURL, dir, progress, opts)
 	}
 	if err != nil {
 		cleanup()
@@ -370,7 +426,7 @@ func extForContentType(ct string) string {
 // binaries are bootstrapped on first use (checksum-verified download into
 // go-ytdlp's cache); a bootstrap failure surfaces as an actionable error,
 // never a stack trace.
-func ytdlpDownload(ctx context.Context, rawURL, dir string, progress progressFunc) (string, error) {
+func ytdlpDownload(ctx context.Context, rawURL, dir string, progress progressFunc, opts SourceFetchOptions) (string, error) {
 	if err := ensureYtdlp(ctx, progress); err != nil {
 		return "", err
 	}
@@ -394,8 +450,11 @@ func ytdlpDownload(ctx context.Context, rawURL, dir string, progress progressFun
 				progress.log("  yt-dlp: %s", s)
 			}
 		})
+	// Cookies / extractor-args (when supplied) — the escape hatch for
+	// YouTube's bot wall on a flagged IP.
+	cmd = applyYtdlpOptions(cmd, opts)
 	if _, err := cmd.Run(ctx, rawURL); err != nil {
-		return "", fmt.Errorf("yt-dlp could not resolve %s: %w (the URL may be private, geo-blocked, age-restricted, or need cookies)", rawURL, err)
+		return "", fmt.Errorf("yt-dlp could not resolve %s: %w (%s)", rawURL, err, ytdlpFailureHint(opts))
 	}
 
 	// yt-dlp chose the extension; find the single file it produced.

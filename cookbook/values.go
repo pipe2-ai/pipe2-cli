@@ -180,7 +180,13 @@ func (c *Context) resolveRemote(name, raw string) (string, error) {
 
 	fetch := c.fetcher
 	if fetch == nil {
-		fetch = fetchRemoteSource
+		// Default production fetcher — bind the context's yt-dlp options
+		// (cookies / extractor args) so the remoteFetcher seam stays
+		// option-free for test stubs.
+		opts := c.fetchOpts
+		fetch = func(ctx context.Context, rawURL string, progress progressFunc) (string, func(), error) {
+			return fetchRemoteSource(ctx, rawURL, progress, opts)
+		}
 	}
 	path, cleanup, err := fetch(c.ctx, raw, c.Logf)
 	// Always clean up the temp download — on success (after upload) and on

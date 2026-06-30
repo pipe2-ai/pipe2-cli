@@ -95,6 +95,9 @@ func newRecipeRunCmd() *cobra.Command {
 	var estimate bool
 	var noFetch bool
 	var assetRef string
+	var cookiesFromBrowser string
+	var cookiesFile string
+	var extractorArgs []string
 	c := &cobra.Command{
 		Use:                "run <slug> [--<input> <value> ...]",
 		Short:              "Execute a recipe end-to-end",
@@ -162,6 +165,17 @@ func newRecipeRunCmd() *cobra.Command {
 			}
 			if noFetch {
 				ctxOpts = append(ctxOpts, cookbook.WithNoFetch(true))
+			}
+			// Cookies / extractor-args for the client-side yt-dlp fetch of a
+			// remote --input. The fix for YouTube's "confirm you're not a bot"
+			// wall on a flagged IP; only meaningful when a source is fetched
+			// (i.e. not --no-fetch / --asset).
+			if cookiesFromBrowser != "" || cookiesFile != "" || len(extractorArgs) > 0 {
+				ctxOpts = append(ctxOpts, cookbook.WithSourceFetchOptions(cookbook.SourceFetchOptions{
+					CookiesFromBrowser: cookiesFromBrowser,
+					CookiesFile:        cookiesFile,
+					ExtractorArgs:      extractorArgs,
+				}))
 			}
 			if captureDir != "" {
 				ctxOpts = append(ctxOpts, cookbook.WithCaptureDir(captureDir))
@@ -237,6 +251,12 @@ func newRecipeRunCmd() *cobra.Command {
 		"treat every source input as an already-uploaded asset reference (URL / id / /s3 path) and pass it through verbatim — skip the client-side download + upload of remote URLs")
 	c.Flags().StringVar(&assetRef, "asset", "",
 		"shortcut for an already-uploaded source asset: equivalent to setting the recipe's `source` input to <id-or-url> with --no-fetch")
+	c.Flags().StringVar(&cookiesFromBrowser, "cookies-from-browser", "",
+		"browser to load cookies from for the client-side yt-dlp fetch of a remote --input (yt-dlp --cookies-from-browser) — the fix for YouTube's \"Sign in to confirm you're not a bot\" wall. e.g. chrome, firefox, safari, edge, or chrome:Default")
+	c.Flags().StringVar(&cookiesFile, "cookies", "",
+		"path to a Netscape cookies.txt file for the client-side yt-dlp fetch (yt-dlp --cookies); the headless/CI alternative to --cookies-from-browser")
+	c.Flags().StringArrayVar(&extractorArgs, "ytdlp-extractor-args", nil,
+		"repeatable yt-dlp --extractor-args value for the remote --input fetch (e.g. youtube:player_client=tv); power-user escape hatch")
 	return c
 }
 

@@ -440,10 +440,13 @@ pipe2 recipe pipe2 recipe run <slug> [--<input> <value> ...] [flags]
 
 - `--asset` (`string`) — shortcut for an already-uploaded source asset: equivalent to setting the recipe's `source` input to <id-or-url> with --no-fetch
 - `--capture-to` (`string`) — directory where Capture writes per-step artifacts (used by the asset-production pipeline)
+- `--cookies` (`string`) — path to a Netscape cookies.txt file for the client-side yt-dlp fetch (yt-dlp --cookies); the headless/CI alternative to --cookies-from-browser
+- `--cookies-from-browser` (`string`) — browser to load cookies from for the client-side yt-dlp fetch of a remote --input (yt-dlp --cookies-from-browser) — the fix for YouTube's "Sign in to confirm you're not a bot" wall. e.g. chrome, firefox, safari, edge, or chrome:Default
 - `--dry-run` (`bool`) — resolve inputs and log the chain that would run, but skip dispatch (no credits charged, no auth required)
 - `--estimate` (`bool`) — fetch credit cost for each step via the API and print a running total (composes with --dry-run for a no-spend cost preview; requires auth)
 - `--no-fetch` (`bool`) — treat every source input as an already-uploaded asset reference (URL / id / /s3 path) and pass it through verbatim — skip the client-side download + upload of remote URLs
 - `--resume` (`bool`) — reuse step outputs recorded in <capture-to>/state.json from a prior run; only steps not yet recorded are dispatched
+- `--ytdlp-extractor-args` (`stringArray`) default `[]` — repeatable yt-dlp --extractor-args value for the remote --input fetch (e.g. youtube:player_client=tv); power-user escape hatch
 
 ### `pipe2 runs`
 

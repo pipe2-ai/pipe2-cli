@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	ytdlp "github.com/lrstanley/go-ytdlp"
 )
 
 func TestClassifySource(t *testing.T) {
@@ -187,7 +189,7 @@ func TestFetchRemoteSourceWrapsAndCleansUp(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, cleanup, err := fetchRemoteSource(context.Background(), srv.URL+"/clip.mp4", nil)
+	_, cleanup, err := fetchRemoteSource(context.Background(), srv.URL+"/clip.mp4", nil, SourceFetchOptions{})
 	if cleanup == nil {
 		t.Fatal("cleanup must never be nil")
 	}
@@ -208,7 +210,7 @@ func TestFetchRemoteSourceCleansUpTempDirOnSuccess(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	path, cleanup, err := fetchRemoteSource(context.Background(), srv.URL+"/clip.mp4", nil)
+	path, cleanup, err := fetchRemoteSource(context.Background(), srv.URL+"/clip.mp4", nil, SourceFetchOptions{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -234,7 +236,7 @@ func isolateYtdlpBootstrap(t *testing.T) {
 
 func TestYtdlpBootstrapFailureGivesActionableError(t *testing.T) {
 	isolateYtdlpBootstrap(t)
-	_, err := ytdlpDownload(context.Background(), "https://www.youtube.com/watch?v=abc", t.TempDir(), nil)
+	_, err := ytdlpDownload(context.Background(), "https://www.youtube.com/watch?v=abc", t.TempDir(), nil, SourceFetchOptions{})
 	if err == nil {
 		t.Fatal("expected a bootstrap error when yt-dlp can't be installed")
 	}
@@ -262,7 +264,7 @@ func TestFetchRemoteSource_DirectMisrouteFallsBackToExtractor(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, cleanup, err := fetchRemoteSource(context.Background(), srv.URL+"/clip.mp4", nil)
+	_, cleanup, err := fetchRemoteSource(context.Background(), srv.URL+"/clip.mp4", nil, SourceFetchOptions{})
 	cleanup()
 	if err == nil {
 		t.Fatal("expected an error (extractor fallback can't bootstrap here)")
@@ -275,5 +277,78 @@ func TestFetchRemoteSource_DirectMisrouteFallsBackToExtractor(t *testing.T) {
 	// misroute fell through to yt-dlp rather than returning the raw HTML body.
 	if !strings.Contains(err.Error(), "bootstrap") {
 		t.Fatalf("expected the extractor-fallback bootstrap error, got: %v", err)
+	}
+}
+
+// TestApplyYtdlpOptions verifies SourceFetchOptions land on the go-ytdlp
+// command as the right yt-dlp flags — asserted via GetFlagConfig so the test
+// never spawns yt-dlp. This is the load-bearing wiring: a regression here
+// silently drops the cookies a user passed to clear YouTube's bot wall.
+func TestApplyYtdlpOptions(t *testing.T) {
+	t.Run("zero value leaves the command untouched", func(t *testing.T) {
+		fc := applyYtdlpOptions(ytdlp.New(), SourceFetchOptions{}).GetFlagConfig()
+		if fc.Filesystem.CookiesFromBrowser != nil {
+			t.Errorf("cookies-from-browser should be unset, got %q", *fc.Filesystem.CookiesFromBrowser)
+		}
+		if fc.Filesystem.Cookies != nil {
+			t.Errorf("cookies should be unset, got %q", *fc.Filesystem.Cookies)
+		}
+		if len(fc.Extractor.ExtractorArgs) != 0 {
+			t.Errorf("extractor-args should be empty, got %v", fc.Extractor.ExtractorArgs)
+		}
+	})
+
+	t.Run("all fields map to the matching yt-dlp flags", func(t *testing.T) {
+		opts := SourceFetchOptions{
+			CookiesFromBrowser: "chrome:Default",
+			CookiesFile:        "/tmp/cookies.txt",
+			ExtractorArgs:      []string{"youtube:player_client=tv", "", "youtube:po_token=abc"},
+		}
+		fc := applyYtdlpOptions(ytdlp.New(), opts).GetFlagConfig()
+		if got := derefString(fc.Filesystem.CookiesFromBrowser); got != "chrome:Default" {
+			t.Errorf("cookies-from-browser = %q, want chrome:Default", got)
+		}
+		if got := derefString(fc.Filesystem.Cookies); got != "/tmp/cookies.txt" {
+			t.Errorf("cookies = %q, want /tmp/cookies.txt", got)
+		}
+		// The empty extractor-arg is skipped, so only the two real ones land.
+		want := []string{"youtube:player_client=tv", "youtube:po_token=abc"}
+		if len(fc.Extractor.ExtractorArgs) != len(want) {
+			t.Fatalf("extractor-args = %v, want %v", fc.Extractor.ExtractorArgs, want)
+		}
+		for i, w := range want {
+			if fc.Extractor.ExtractorArgs[i] != w {
+				t.Errorf("extractor-args[%d] = %q, want %q", i, fc.Extractor.ExtractorArgs[i], w)
+			}
+		}
+	})
+}
+
+func derefString(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
+}
+
+// TestYtdlpFailureHint pins the actionable error tail: with no cookies it must
+// name the flags that clear the bot wall (the common case); with cookies it
+// must NOT re-suggest a flag the user already passed.
+func TestYtdlpFailureHint(t *testing.T) {
+	noCookies := ytdlpFailureHint(SourceFetchOptions{})
+	if !strings.Contains(noCookies, "--cookies-from-browser") {
+		t.Errorf("hint with no cookies must point at --cookies-from-browser, got: %q", noCookies)
+	}
+	if !strings.Contains(noCookies, "not a bot") {
+		t.Errorf("hint with no cookies should name the bot wall, got: %q", noCookies)
+	}
+
+	withBrowser := ytdlpFailureHint(SourceFetchOptions{CookiesFromBrowser: "chrome"})
+	if strings.Contains(withBrowser, "--cookies-from-browser") {
+		t.Errorf("hint must not re-suggest --cookies-from-browser when already supplied, got: %q", withBrowser)
+	}
+	withFile := ytdlpFailureHint(SourceFetchOptions{CookiesFile: "/tmp/c.txt"})
+	if strings.Contains(withFile, "pass --cookies") {
+		t.Errorf("hint must not re-suggest --cookies when a cookies file was supplied, got: %q", withFile)
 	}
 }

@@ -154,6 +154,12 @@ type Context struct {
 	// to fetchRemoteSource (yt-dlp / plain HTTP); tests inject a stub via
 	// WithFetcher so source resolution doesn't touch the network.
 	fetcher remoteFetcher
+
+	// fetchOpts tunes the default remote fetcher's yt-dlp path (cookies /
+	// extractor args) — set from `pipe2 recipe run --cookies-from-browser`
+	// et al. Only applies when fetcher is nil (the production default); a
+	// test-injected WithFetcher stub ignores it.
+	fetchOpts SourceFetchOptions
 }
 
 // remoteFetcher downloads rawURL to a local temp file and returns the path
@@ -232,6 +238,14 @@ func WithNoFetch(on bool) ContextOption { return func(c *Context) { c.noFetch = 
 // applies); tests inject a stub so source resolution never touches the
 // network.
 func WithFetcher(f remoteFetcher) ContextOption { return func(c *Context) { c.fetcher = f } }
+
+// WithSourceFetchOptions tunes the default remote fetcher's yt-dlp path —
+// cookies (--cookies-from-browser / --cookies) and extractor args. These let
+// a user past YouTube's "confirm you're not a bot" wall on a flagged IP. They
+// apply only to the production fetcher; a WithFetcher stub ignores them.
+func WithSourceFetchOptions(opts SourceFetchOptions) ContextOption {
+	return func(c *Context) { c.fetchOpts = opts }
+}
 
 // WithResume enables resume mode for the context. The runner loads
 // state.json from captureDir (must be set) and feeds it in; subsequent
