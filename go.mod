@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/Khan/genqlient v0.8.1
 	github.com/lrstanley/go-ytdlp v1.3.5
-	github.com/pipe2-ai/sdk-go v0.3.0
+	github.com/pipe2-ai/sdk-go v0.4.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/sync v0.8.0
