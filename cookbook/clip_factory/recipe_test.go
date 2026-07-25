@@ -420,9 +420,12 @@ func TestManifest_Shape(t *testing.T) {
 			t.Errorf("Chain[%d].Pipeline = %q, want %q", i, m.Chain[i].Pipeline, want)
 		}
 	}
-	// highlights step must declare OptionalWhenEmpty: "clips"
-	if m.Chain[1].OptionalWhenEmpty != "clips" {
-		t.Errorf("Chain[1] (highlights) OptionalWhenEmpty = %q, want %q", m.Chain[1].OptionalWhenEmpty, "clips")
+	// highlights must NOT declare OptionalWhenEmpty: it RUNS in a defaults run
+	// (auto-pick) and is skipped when --clips is SET — the inverse of the
+	// field's documented emptiness semantics. Declaring it made the article's
+	// defaults total omit a step every defaults run pays for.
+	if m.Chain[1].OptionalWhenEmpty != "" {
+		t.Errorf("Chain[1] (highlights) OptionalWhenEmpty = %q, want \"\" (see chain comment in recipe.go)", m.Chain[1].OptionalWhenEmpty)
 	}
 	// reframe step must declare OptionalWhenEmpty: "reformat"
 	if m.Chain[3].OptionalWhenEmpty != "reformat" {

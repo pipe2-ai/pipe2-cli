@@ -1,9 +1,9 @@
 // gen-docs walks the pipe2 command tree and writes one Starlight-compatible
 // Markdown file per command under the target directory. It is the source of
-// truth for every page under docs/cli/reference/ — hand-editing those files
-// is pointless because CI re-runs this tool and diffs the result.
+// truth for the published CLI reference pages, which are regenerated and
+// diffed automatically rather than hand-edited.
 //
-//	go run ./cmd/gen-docs --out ../../docs/src/content/docs/cli/reference
+//	go run ./cmd/gen-docs --out <docs-reference-dir>
 //
 // Exit codes:
 //

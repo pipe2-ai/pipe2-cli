@@ -1,8 +1,6 @@
 # goreleaser config for the pipe2 CLI.
 #
-# Runs inside the pipe2-ai/pipe2-cli mirror repo (populated by
-# .github/workflows/publish-pipe2-cli.yml on each cli-v* tag push).
-# Produces:
+# Runs on each release tag. Produces:
 #   • Cross-compiled binaries for macOS + Linux on amd64 + arm64
 #   • GitHub Releases on pipe2-ai/pipe2-cli with tarballs + checksums
 #   • A Homebrew formula pushed to pipe2-ai/homebrew-tap so users can

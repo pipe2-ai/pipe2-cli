@@ -22,8 +22,8 @@ type listPipelineRunsVars struct {
 	Offset *int `json:"offset,omitempty"`
 }
 
-// terminalStatuses lists pipeline_runs.status values that mean "won't change".
-// Mirrors packages/api/internal/actions/router.go and worker conventions.
+// terminalStatuses lists run status values that mean "won't change".
+// Mirrors the server's status conventions.
 var terminalStatuses = map[string]bool{
 	"completed": true,
 	"failed":    true,

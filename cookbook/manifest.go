@@ -15,10 +15,6 @@
 // This eliminates the recipe.sh + recipe.json dual source of truth:
 // the Go function is the runnable, and the manifest.json shipped to
 // the website is *generated* from Manifest() rather than hand-edited.
-//
-// Recipes will move to their own public github.com/pipe2-ai/pipe2-cli
-// repository alongside this package once the cross-repo migration
-// lands. Until then they live in this monorepo.
 package cookbook
 
 // SchemaVersion is the highest manifest schema this binary speaks.
@@ -55,10 +51,10 @@ const (
 	NoneKind ArtifactKind = "none"
 )
 
-// Manifest is the metadata projection of a recipe. It mirrors the
-// Zod schema in packages/web/src/content.config.ts — both must move
-// together when fields change. JSON tags use snake_case to match
-// what the loader expects.
+// Manifest is the metadata projection of a recipe. It mirrors the schema
+// the website's content loader validates against — both must move together
+// when fields change. JSON tags use snake_case to match what the loader
+// expects.
 type Manifest struct {
 	SchemaVersion int `json:"schema_version"`
 

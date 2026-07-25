@@ -1,11 +1,9 @@
 // Package e2e contains end-to-end tests for the pipe2 binary. They are
-// guarded by the `e2e` build tag so `go test ./...` in normal CI doesn't
-// try to talk to a real Hasura — only the dedicated e2e job opts in.
+// guarded by the `e2e` build tag so a plain `go test ./...` doesn't try to
+// reach a live API — only the dedicated e2e job opts in.
 //
-// To run locally against a docker-compose stack:
+// To run them, point the suite at a reachable API and opt in via the tag:
 //
-//	cd packages/pipe2-cli
-//	docker compose -f ../../compose.yml -f ../../compose.test.yml up -d
 //	go test -tags=e2e ./e2e/... -v
 //
 //go:build e2e

@@ -21,19 +21,6 @@ func Out(v any) error {
 	return humanize(os.Stdout, v)
 }
 
-// OutNDJSON streams one JSON object per line. Used for paginated lists and
-// long-running watches so agents can process incrementally.
-func OutNDJSON(items <-chan any) error {
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetEscapeHTML(false)
-	for item := range items {
-		if err := enc.Encode(item); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // Status prints a human-readable progress line to stderr. Suppressed when
 // --json is set unless --verbose is also set, because agents tend to ignore
 // stderr but we still want it visible during interactive debugging.

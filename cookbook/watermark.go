@@ -12,8 +12,7 @@ import (
 // The Pipe2 brand mark is packaged into the CLI binary at build time so
 // recipes can apply it without a network round-trip. Every variant is
 // the same logo lockup (infinity glyph + the Space Grotesk wordmark) in
-// a different colour — see scripts/render-watermarks.sh, which renders them
-// all from packages/web/public/pipe2-watermark.svg.
+// a different colour, all rendered from the same source logo.
 //
 // "light" is the minimal mark — a white wordmark, for dark footage only.
 // Every other variant is built in the "universal" style (coloured

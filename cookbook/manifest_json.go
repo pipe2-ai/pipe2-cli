@@ -5,10 +5,9 @@ import (
 	"sort"
 )
 
-// MarshalJSON renders Manifest in the shape the website's content
-// loader (packages/web/src/content.config.ts) reads. Inputs are
-// serialized as a map<string, InputDecl> rather than an array so
-// the Zod schema's z.record(inputDecl) matches without translation.
+// MarshalJSON renders Manifest in the shape the website's content loader
+// reads. Inputs are serialized as a map<string, InputDecl> rather than an
+// array so the loader's record schema matches without translation.
 //
 // Custom MarshalJSON keeps the in-memory representation ergonomic
 // for recipes (Input slices preserve declaration order — useful for

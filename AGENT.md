@@ -556,4 +556,4 @@ pipe2 skill pipe2 skill show
 
 ---
 
-_Command reference auto-generated from the live cobra command tree — do not hand-edit._
+_Command reference generated from the CLI's own command tree — regenerate with `go run ./cmd/gen-agent-md`._

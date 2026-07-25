@@ -3,6 +3,7 @@ package cookbook
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -60,7 +61,11 @@ func ApplyCorrections(body string, corrections map[string]string) string {
 	for k := range corrections {
 		keys = append(keys, k)
 	}
-	sortByLenDesc(keys)
+	// Longest keys first, ties broken alphabetically.
+	sort.Slice(keys, func(i, j int) bool {
+		a, b := keys[i], keys[j]
+		return len(a) > len(b) || (len(a) == len(b) && a < b)
+	})
 	for _, from := range keys {
 		re, err := regexp.Compile(`\b` + regexp.QuoteMeta(from) + `\b`)
 		if err != nil {
@@ -69,19 +74,4 @@ func ApplyCorrections(body string, corrections map[string]string) string {
 		body = re.ReplaceAllString(body, corrections[from])
 	}
 	return body
-}
-
-// sortByLenDesc sorts in place: longest strings first, ties broken
-// alphabetically. Tiny n — insertion sort beats sort.Slice's reflect
-// overhead.
-func sortByLenDesc(s []string) {
-	for i := 1; i < len(s); i++ {
-		for j := i; j > 0; j-- {
-			a, b := s[j-1], s[j]
-			if len(a) > len(b) || (len(a) == len(b) && a < b) {
-				break
-			}
-			s[j-1], s[j] = b, a
-		}
-	}
 }

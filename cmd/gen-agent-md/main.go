@@ -11,7 +11,7 @@
 // AGENT.md and SKILL.md therefore share the prose: you edit SKILL.md,
 // regen AGENT.md, and the two files never diverge.
 //
-// Usage (from packages/pipe2-cli/):
+// Usage (from the module root):
 //
 //	go run ./cmd/gen-agent-md
 //
@@ -49,9 +49,9 @@ func main() {
 }
 
 // moduleRoot walks up from the current working directory until it finds a
-// go.mod containing module github.com/pipe2-ai/pipe2-cli. That's the
-// file the public repo root will contain after subtree split, so we
-// anchor both output paths to it and avoid hardcoding packages/pipe2-cli/.
+// go.mod containing module github.com/pipe2-ai/pipe2-cli. Anchoring both
+// output paths to that file keeps this tool correct wherever the module is
+// checked out, instead of hardcoding a directory layout.
 func moduleRoot() (string, error) {
 	dir, err := os.Getwd()
 	if err != nil {
@@ -129,7 +129,7 @@ func generateAgentMD(root *cobra.Command, skillMD []byte) string {
 	// flips between local regen and CI run. `git log -- AGENT.md` already
 	// records when the file was regenerated, so the stamp is redundant.
 	b.WriteString("\n---\n\n")
-	b.WriteString("_Command reference auto-generated from the live cobra command tree — do not hand-edit._\n")
+	b.WriteString("_Command reference generated from the CLI's own command tree — regenerate with `go run ./cmd/gen-agent-md`._\n")
 	return b.String()
 }
 

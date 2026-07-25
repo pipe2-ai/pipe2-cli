@@ -4,7 +4,7 @@
     {
       "slug": "clip-factory",
       "title": "Long video → multiple captioned clips, in one command",
-      "description": "Slice any long video into N captioned shorter clips. Transcribe once, auto-pick the moments with AI, trim + caption each in parallel. Optionally reformat to vertical (9:16) for TikTok / Reels / Shorts, square (1:1) for Instagram, or portrait (4:5) — caption anchor auto-adjusts.",
+      "description": "Slice any long video into N captioned shorter clips. Transcribe once, auto-pick the moments with AI, trim + caption each in parallel. Optionally reformat to vertical (9:16) for TikTok / Reels / Shorts, square (1:1) for Instagram, or portrait (4:5); the caption anchor auto-adjusts.",
       "category": "tutorial",
       "tags": [
         "cli",

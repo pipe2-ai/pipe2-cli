@@ -60,13 +60,13 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 	// knobs → quality knobs → branding.
 	inputs := []cookbook.Input{
 		{Name: "source", Type: cookbook.AssetURL, Required: true, CLIArg: "--input",
-			Description: "Source video — a YouTube/social URL, a direct media URL, a local file, or an existing pipe2 asset (URL / /s3 path / id). Remote URLs are resolved on your machine (yt-dlp for streaming/social, plain HTTP for direct links) and uploaded as an asset; the platform never fetches them server-side. yt-dlp + ffmpeg are auto-installed on first use (checksum-verified); set PIPE2_YTDLP_SYSTEM=1 to use ones already on PATH. Use --asset <id> / --no-fetch to skip the fetch for an already-uploaded asset."},
+			Description: "Source video: a YouTube/social URL, a direct media URL, a local file, or an existing pipe2 asset (URL / /s3 path / id). Remote URLs are resolved on your machine (yt-dlp for streaming/social, plain HTTP for direct links) and uploaded as an asset; the platform never fetches them server-side. yt-dlp + ffmpeg are auto-installed on first use (checksum-verified); set PIPE2_YTDLP_SYSTEM=1 to use ones already on PATH. Use --asset <id> / --no-fetch to skip the fetch for an already-uploaded asset."},
 		{Name: "clips", Type: cookbook.String, Default: "", CLIArg: "--clips",
 			Description: `Optional path to a JSON file overriding the auto-picker, shaped [{"context": "...", "start_sec": 42.5, "end_sec": 78.0}, ...]. When set, the highlights step is skipped. Leave empty to let the highlights pipeline pick automatically.`},
 		{Name: "highlights_count", Type: cookbook.Int, Default: int64(5), CLIArg: "--highlights-count",
 			Description: "How many moments to pick when highlights runs (auto mode). Ignored if --clips is set."},
 		{Name: "highlights_style", Type: cookbook.String, Default: "", CLIArg: "--highlights-style",
-			Description: `Natural-language steer for the highlights picker — e.g. "the funniest moments", "the strongest arguments". Empty uses the picker's default.`},
+			Description: `Natural-language steer for the highlights picker: e.g. "the funniest moments", "the strongest arguments". Empty uses the picker's default.`},
 		// Default: serif-editorial — restrained Noto Serif on a
 		// translucent dark card. Designed for technical / podcast
 		// content where viewers should READ the words, not chase
@@ -77,7 +77,7 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 			Description: "Caption styling preset for every clip."},
 		{Name: "position", Type: cookbook.Enum, Default: positionAuto, CLIArg: "--position",
 			Values:      []string{"auto", "top", "middle", "bottom"},
-			Description: `Vertical anchor for the burned captions. "auto" (default) lets the captions pipeline place the text on the opposite half of the frame from the subject — the reframe step's subject-Y hint feeds the decision when --reformat is set; otherwise auto falls through to "bottom". Set explicitly to override.`},
+			Description: `Vertical anchor for the burned captions. "auto" (default) lets the captions pipeline place the text on the opposite half of the frame from the subject: the reframe step's subject-Y hint feeds the decision when --reformat is set; otherwise auto falls through to "bottom". Set explicitly to override.`},
 		// Empty (default) means "preserve source aspect, skip the
 		// reframe step entirely". The chain step declares
 		// optional_when_empty: "reformat" so the recipe-page cost
@@ -85,13 +85,13 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 		// to mark step 4 as default-skipped.
 		{Name: "reformat", Type: cookbook.Enum, Default: "", CLIArg: "--reformat",
 			Values:      []string{"", "9:16", "1:1", "4:5", "16:9"},
-			Description: "Optional output aspect ratio. Leave empty to preserve the source's native aspect (default — fastest, cheapest). Set to 9:16 for TikTok/Reels/Shorts, 1:1 or 4:5 for Instagram, 16:9 for horizontal YouTube cards from a vertical source."},
+			Description: "Optional output aspect ratio. Leave empty to preserve the source's native aspect (default: fastest, cheapest). Set to 9:16 for TikTok/Reels/Shorts, 1:1 or 4:5 for Instagram, 16:9 for horizontal YouTube cards from a vertical source."},
 		{Name: "language", Type: cookbook.String, Default: "en", CLIArg: "--lang",
 			Description: "ISO 639-1 transcription language, or 'auto'."},
 		// Routes through transcription so the LLM-driven trim step
 		// AND the burned captions both read the corrected SRT.
 		{Name: "corrections", Type: cookbook.String, Default: "", CLIArg: "--corrections",
-			Description: "Comma-separated word-boundary substitutions applied to the transcript, in the form \"from=to,from=to\". Use it when the recognizer mis-hears the same word the same way every time (a name, an acronym, a domain term). To preserve a phrase that contains a substring you also want to rewrite, declare the longer phrase first as a no-op (\"phrase=phrase,word=replacement\") — longer matches win, so the phrase is shielded before the bare-word rule fires. Case-sensitive."},
+			Description: "Comma-separated word-boundary substitutions applied to the transcript, in the form \"from=to,from=to\". Use it when the recognizer mis-hears the same word the same way every time (a name, an acronym, a domain term). To preserve a phrase that contains a substring you also want to rewrite, declare the longer phrase first as a no-op (\"phrase=phrase,word=replacement\"): longer matches win, so the phrase is shielded before the bare-word rule fires. Case-sensitive."},
 		{Name: "parallelism", Type: cookbook.Int, Default: int64(4), CLIArg: "--parallel",
 			Description: "Max number of clips to process in parallel."},
 	}
@@ -100,14 +100,14 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 	return cookbook.Manifest{
 		Slug:           "clip-factory",
 		Title:          "Long video → multiple captioned clips, in one command",
-		Description:    "Slice any long video into N captioned shorter clips. Transcribe once, auto-pick the moments with AI, trim + caption each in parallel. Optionally reformat to vertical (9:16) for TikTok / Reels / Shorts, square (1:1) for Instagram, or portrait (4:5) — caption anchor auto-adjusts.",
+		Description:    "Slice any long video into N captioned shorter clips. Transcribe once, auto-pick the moments with AI, trim + caption each in parallel. Optionally reformat to vertical (9:16) for TikTok / Reels / Shorts, square (1:1) for Instagram, or portrait (4:5); the caption anchor auto-adjusts.",
 		IntroVoiceover: "Got a long video and want a dozen shorter ones out of it? Transcribe the whole thing once, let AI pick the best moments, then loop trim and caption per clip. Pass --reformat to crop to vertical for TikTok or Reels; leave it off and the source aspect is preserved for YouTube cards or Instagram feeds.",
 		Category:       "tutorial",
 		Tags:           []string{"cli", "claude-code", "captions", "transcription", "highlights", "video-trim", "video-reframe", "shorts", "vertical-video", "tiktok", "reels", "instagram", "youtube-shorts", "agent-loop"},
 		Audience:       []string{"creator", "podcaster", "agency editor", "AI agent"},
 		SourceVideo: &cookbook.VideoSource{
 			URL:   "https://www.youtube.com/watch?v=4uzGDAoNOZc",
-			Title: "OpenClaw Creator — Why 80% of Apps Will Disappear",
+			Title: "OpenClaw Creator, Why 80% of Apps Will Disappear",
 			Note:  "Demo previews are five clips cut from this interview. Drop in any long-form video to make your own.",
 		},
 		PublishedAt: "2026-05-20",
@@ -115,20 +115,25 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 		Inputs:      inputs,
 		Chain: []cookbook.ChainStep{
 			{Pipeline: "transcription", ArtifactKind: cookbook.Text,
-				WhatItDoes: "ElevenLabs Scribe transcribes the full source once — cached on the source hash, so re-runs and every clip after the first are free. The trim reads these words to find each moment."},
-			{Pipeline: "highlights", ArtifactKind: cookbook.JSON, OptionalWhenEmpty: "clips",
-				WhatItDoes: "Reads the transcript and picks N editorial moments — the auto-pick path. Skipped when --clips supplies a manual JSON list."},
+				WhatItDoes: "ElevenLabs Scribe transcribes the full source once: cached on the source hash, so re-runs and every clip after the first are free. The trim reads these words to find each moment."},
+			// No OptionalWhenEmpty here: that field means "EMPTINESS of the
+			// input skips the step", but highlights is the opposite — it RUNS
+			// in a defaults run (auto-pick) and is skipped when --clips is
+			// SET. Declaring it inverted made the article's defaults total
+			// omit a step every defaults run actually pays for.
+			{Pipeline: "highlights", ArtifactKind: cookbook.JSON,
+				WhatItDoes: "Reads the transcript and picks N editorial moments: the auto-pick path. Skipped when --clips supplies a manual JSON list."},
 			{Pipeline: "video-trim", ArtifactKind: cookbook.Video,
 				WhatItDoes: "Per clip: deterministic SRT-slice + ffmpeg-cut to the window highlights picked, snapped to sentence boundaries. Returns the windowed transcript rebased to the clip for the captions step."},
 			{Pipeline: "video-reframe", ArtifactKind: cookbook.Video, OptionalWhenEmpty: "reformat",
-				WhatItDoes: "Per clip (only when --reformat is set): reframes to the requested aspect ratio with the lock-and-cut camera director — it frames the active speaker in every shot (from the windowed transcript + CV faces) and cuts cleanly at shot boundaries, never drifting or panning. Skipped by default — the source's native aspect is preserved."},
+				WhatItDoes: "Per clip (only when --reformat is set): reframes to the requested aspect ratio with the lock-and-cut camera director: it frames the active speaker in every shot (from the windowed transcript + CV faces) and cuts cleanly at shot boundaries, never drifting or panning. Skipped by default: the source's native aspect is preserved."},
 			{Pipeline: "captions", ArtifactKind: cookbook.Video,
 				WhatItDoes: "Per clip: burns the windowed transcript onto the clip in your chosen preset, at the anchor --position picks."},
 			cookbook.WatermarkChainStep(),
 		},
 		ExampleCommand: "pipe2 recipe run clip-factory --input https://www.youtube.com/watch?v=4uzGDAoNOZc --reformat 9:16",
 		AgentPrompt: strings.Join([]string{
-			"Run the pipe2 clip-factory recipe — one long video → N captioned, watermarked clips. Picks moments automatically.",
+			"Run the pipe2 clip-factory recipe: one long video → N captioned, watermarked clips. Picks moments automatically.",
 			"",
 			"Dispatch: pipe2 recipe run clip-factory --input <video-url-or-local-path> --reformat 9:16",
 			"",
@@ -184,7 +189,7 @@ func (r *Recipe) Run(ctx *cookbook.Context) error {
 		if len(moments) == 0 {
 			return fmt.Errorf("clips file %s is empty", clipsPath)
 		}
-		ctx.Logf("manual clips loaded — %d clip%s queued", len(moments), pluralS(len(moments)))
+		ctx.Logf("manual clips loaded, %d clip%s queued", len(moments), pluralS(len(moments)))
 	} else {
 		// Auto path: dispatch highlights pipeline.
 		h, err := ctx.RunPipeline("highlights", cookbook.Inputs{
@@ -226,7 +231,7 @@ func (r *Recipe) Run(ctx *cookbook.Context) error {
 		if len(moments) == 0 {
 			return fmt.Errorf("highlights pipeline returned no moments")
 		}
-		ctx.Logf("highlights picked — %d clip%s queued", len(moments), pluralS(len(moments)))
+		ctx.Logf("highlights picked, %d clip%s queued", len(moments), pluralS(len(moments)))
 	}
 
 	if reformat != "" {
@@ -255,7 +260,7 @@ func (r *Recipe) Run(ctx *cookbook.Context) error {
 		i, m := i, m
 		g.Go(func() error {
 			sub := ctx.Substep(i + 1).WithContext(gctx)
-			sub.Logf("clip %d — %s", i+1, m.Context)
+			sub.Logf("clip %d, %s", i+1, m.Context)
 
 			// Trim — explicit-window only. Highlights always emits
 			// start_sec/end_sec; manual --clips entries must include the

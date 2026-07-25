@@ -7,11 +7,9 @@
 // against committed JSON to verify drift in CI (`make cookbook-check`).
 //
 // Output is anchored to the module root (the go.mod holding
-// `module github.com/pipe2-ai/pipe2-cli`), exactly like
-// cmd/gen-agent-md. That resolves to packages/pipe2-cli/cookbook in
-// the monorepo and the repo-root cookbook/ in the split-out public
-// repo, so the same tool writes the committed files in both layouts
-// without hardcoding either path.
+// `module github.com/pipe2-ai/pipe2-cli`), exactly like cmd/gen-agent-md,
+// so the tool writes the committed files correctly wherever the module is
+// checked out rather than hardcoding a directory layout.
 package main
 
 import (
@@ -157,9 +155,8 @@ func die(format string, args ...any) { fmt.Fprintf(os.Stderr, format+"\n", args.
 
 // moduleRoot walks up from the current working directory until it finds
 // a go.mod containing module github.com/pipe2-ai/pipe2-cli — the same
-// anchor cmd/gen-agent-md uses. It's the repo root after the subtree
-// split (cookbook/ lives beside it) and packages/pipe2-cli/ in the
-// monorepo, so we avoid hardcoding either layout.
+// anchor cmd/gen-agent-md uses. cookbook/ lives beside it, so resolving
+// this avoids hardcoding a directory layout.
 func moduleRoot() (string, error) {
 	dir, err := os.Getwd()
 	if err != nil {

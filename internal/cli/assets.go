@@ -36,9 +36,9 @@ func newAssetsCmd() *cobra.Command {
 	return c
 }
 
-// Size limits mirror packages/api/internal/actions/multipart_upload.go.
-// Kept in sync by hand — the action enforces nothing on its end (presigned
-// PUT URLs don't carry Content-Length policy), so the CLI must guard.
+// Size limits mirror the server's multipart upload limits, kept in sync by
+// hand — the server enforces nothing on its end (presigned PUT URLs don't
+// carry Content-Length policy), so the CLI must guard.
 //
 // Files at or below singlePutThreshold use the single-PUT path (one
 // request_upload + one PUT + one create_asset); larger files use the

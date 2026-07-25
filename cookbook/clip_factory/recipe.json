@@ -1,5 +1,5 @@
 {
-  "agent_prompt": "Run the pipe2 clip-factory recipe — one long video → N captioned, watermarked clips. Picks moments automatically.\n\nDispatch: pipe2 recipe run clip-factory --input \u003cvideo-url-or-local-path\u003e --reformat 9:16\n\nTune the picker with --highlights-count N and --highlights-style \"the funniest moments\". Power-user override: --clips path/to/clips.json (JSON array of {\"context\",\"start_sec\",\"end_sec\"}).\n\nReturns a JSON array of clip URLs.",
+  "agent_prompt": "Run the pipe2 clip-factory recipe: one long video → N captioned, watermarked clips. Picks moments automatically.\n\nDispatch: pipe2 recipe run clip-factory --input \u003cvideo-url-or-local-path\u003e --reformat 9:16\n\nTune the picker with --highlights-count N and --highlights-style \"the funniest moments\". Power-user override: --clips path/to/clips.json (JSON array of {\"context\",\"start_sec\",\"end_sec\"}).\n\nReturns a JSON array of clip URLs.",
   "audience": [
     "creator",
     "podcaster",
@@ -10,14 +10,13 @@
   "chain": [
     {
       "pipeline": "transcription",
-      "what_it_does": "ElevenLabs Scribe transcribes the full source once — cached on the source hash, so re-runs and every clip after the first are free. The trim reads these words to find each moment.",
+      "what_it_does": "ElevenLabs Scribe transcribes the full source once: cached on the source hash, so re-runs and every clip after the first are free. The trim reads these words to find each moment.",
       "artifact_kind": "text"
     },
     {
       "pipeline": "highlights",
-      "what_it_does": "Reads the transcript and picks N editorial moments — the auto-pick path. Skipped when --clips supplies a manual JSON list.",
-      "artifact_kind": "json",
-      "optional_when_empty": "clips"
+      "what_it_does": "Reads the transcript and picks N editorial moments: the auto-pick path. Skipped when --clips supplies a manual JSON list.",
+      "artifact_kind": "json"
     },
     {
       "pipeline": "video-trim",
@@ -26,7 +25,7 @@
     },
     {
       "pipeline": "video-reframe",
-      "what_it_does": "Per clip (only when --reformat is set): reframes to the requested aspect ratio with the lock-and-cut camera director — it frames the active speaker in every shot (from the windowed transcript + CV faces) and cuts cleanly at shot boundaries, never drifting or panning. Skipped by default — the source's native aspect is preserved.",
+      "what_it_does": "Per clip (only when --reformat is set): reframes to the requested aspect ratio with the lock-and-cut camera director: it frames the active speaker in every shot (from the windowed transcript + CV faces) and cuts cleanly at shot boundaries, never drifting or panning. Skipped by default: the source's native aspect is preserved.",
       "artifact_kind": "video",
       "optional_when_empty": "reformat"
     },
@@ -41,7 +40,7 @@
       "artifact_kind": "video"
     }
   ],
-  "description": "Slice any long video into N captioned shorter clips. Transcribe once, auto-pick the moments with AI, trim + caption each in parallel. Optionally reformat to vertical (9:16) for TikTok / Reels / Shorts, square (1:1) for Instagram, or portrait (4:5) — caption anchor auto-adjusts.",
+  "description": "Slice any long video into N captioned shorter clips. Transcribe once, auto-pick the moments with AI, trim + caption each in parallel. Optionally reformat to vertical (9:16) for TikTok / Reels / Shorts, square (1:1) for Instagram, or portrait (4:5); the caption anchor auto-adjusts.",
   "example_command": "pipe2 recipe run clip-factory --input https://www.youtube.com/watch?v=4uzGDAoNOZc --reformat 9:16",
   "inputs": {
     "clips": {
@@ -54,7 +53,7 @@
       "type": "string",
       "default": "",
       "cli_arg": "--corrections",
-      "description": "Comma-separated word-boundary substitutions applied to the transcript, in the form \"from=to,from=to\". Use it when the recognizer mis-hears the same word the same way every time (a name, an acronym, a domain term). To preserve a phrase that contains a substring you also want to rewrite, declare the longer phrase first as a no-op (\"phrase=phrase,word=replacement\") — longer matches win, so the phrase is shielded before the bare-word rule fires. Case-sensitive."
+      "description": "Comma-separated word-boundary substitutions applied to the transcript, in the form \"from=to,from=to\". Use it when the recognizer mis-hears the same word the same way every time (a name, an acronym, a domain term). To preserve a phrase that contains a substring you also want to rewrite, declare the longer phrase first as a no-op (\"phrase=phrase,word=replacement\"): longer matches win, so the phrase is shielded before the bare-word rule fires. Case-sensitive."
     },
     "highlights_count": {
       "type": "int",
@@ -66,7 +65,7 @@
       "type": "string",
       "default": "",
       "cli_arg": "--highlights-style",
-      "description": "Natural-language steer for the highlights picker — e.g. \"the funniest moments\", \"the strongest arguments\". Empty uses the picker's default."
+      "description": "Natural-language steer for the highlights picker: e.g. \"the funniest moments\", \"the strongest arguments\". Empty uses the picker's default."
     },
     "language": {
       "type": "string",
@@ -96,7 +95,7 @@
         "bottom"
       ],
       "cli_arg": "--position",
-      "description": "Vertical anchor for the burned captions. \"auto\" (default) lets the captions pipeline place the text on the opposite half of the frame from the subject — the reframe step's subject-Y hint feeds the decision when --reformat is set; otherwise auto falls through to \"bottom\". Set explicitly to override."
+      "description": "Vertical anchor for the burned captions. \"auto\" (default) lets the captions pipeline place the text on the opposite half of the frame from the subject: the reframe step's subject-Y hint feeds the decision when --reformat is set; otherwise auto falls through to \"bottom\". Set explicitly to override."
     },
     "preset": {
       "type": "enum",
@@ -123,13 +122,13 @@
         "16:9"
       ],
       "cli_arg": "--reformat",
-      "description": "Optional output aspect ratio. Leave empty to preserve the source's native aspect (default — fastest, cheapest). Set to 9:16 for TikTok/Reels/Shorts, 1:1 or 4:5 for Instagram, 16:9 for horizontal YouTube cards from a vertical source."
+      "description": "Optional output aspect ratio. Leave empty to preserve the source's native aspect (default: fastest, cheapest). Set to 9:16 for TikTok/Reels/Shorts, 1:1 or 4:5 for Instagram, 16:9 for horizontal YouTube cards from a vertical source."
     },
     "source": {
       "type": "asset_url",
       "required": true,
       "cli_arg": "--input",
-      "description": "Source video — a YouTube/social URL, a direct media URL, a local file, or an existing pipe2 asset (URL / /s3 path / id). Remote URLs are resolved on your machine (yt-dlp for streaming/social, plain HTTP for direct links) and uploaded as an asset; the platform never fetches them server-side. yt-dlp + ffmpeg are auto-installed on first use (checksum-verified); set PIPE2_YTDLP_SYSTEM=1 to use ones already on PATH. Use --asset \u003cid\u003e / --no-fetch to skip the fetch for an already-uploaded asset."
+      "description": "Source video: a YouTube/social URL, a direct media URL, a local file, or an existing pipe2 asset (URL / /s3 path / id). Remote URLs are resolved on your machine (yt-dlp for streaming/social, plain HTTP for direct links) and uploaded as an asset; the platform never fetches them server-side. yt-dlp + ffmpeg are auto-installed on first use (checksum-verified); set PIPE2_YTDLP_SYSTEM=1 to use ones already on PATH. Use --asset \u003cid\u003e / --no-fetch to skip the fetch for an already-uploaded asset."
     },
     "watermark_scale_pct": {
       "type": "int",
@@ -165,7 +164,7 @@
   "slug": "clip-factory",
   "source_video": {
     "url": "https://www.youtube.com/watch?v=4uzGDAoNOZc",
-    "title": "OpenClaw Creator — Why 80% of Apps Will Disappear",
+    "title": "OpenClaw Creator, Why 80% of Apps Will Disappear",
     "note": "Demo previews are five clips cut from this interview. Drop in any long-form video to make your own."
   },
   "tags": [
