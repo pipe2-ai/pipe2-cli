@@ -26,9 +26,9 @@ import (
 )
 
 const (
-	defaultHasuraURL    = "http://localhost:8180/v1/graphql"
-	defaultAdminSecret  = "hasura_admin_secret"
-	defaultUserEmail    = "user@example.com"
+	defaultHasuraURL   = "http://localhost:8180/v1/graphql"
+	defaultAdminSecret = "hasura_admin_secret"
+	defaultUserEmail   = "user@example.com"
 )
 
 // testEnv is shared across all e2e tests in this package.
@@ -156,14 +156,13 @@ func lookupDevUserID(hasuraURL, adminSecret string) (string, error) {
 	return body.Data.Users[0].ID, nil
 }
 
-// mintPAT creates a personal access token by invoking the Hasura action
-// with admin secret + user impersonation headers. The action handler reads
-// x-hasura-user-id from session_variables and creates the row + JWT.
+// mintPAT creates a personal access token by invoking the Hasura action with
+// trusted admin headers that model the seeded user's browser session.
 func mintPAT(hasuraURL, adminSecret, userID, name string) (string, error) {
 	const m = `mutation Mint($name: String!) {
 		create_personal_access_token(name: $name) { token }
 	}`
-	resp, err := graphqlImpersonate(hasuraURL, adminSecret, userID, m,
+	resp, err := graphqlBrowserAsAdmin(hasuraURL, adminSecret, userID, m,
 		map[string]any{"name": name})
 	if err != nil {
 		return "", err
@@ -196,11 +195,12 @@ func graphqlAdmin(url, secret, query string, vars map[string]any) ([]byte, error
 	}, query, vars)
 }
 
-func graphqlImpersonate(url, secret, userID, query string, vars map[string]any) ([]byte, error) {
+func graphqlBrowserAsAdmin(url, secret, userID, query string, vars map[string]any) ([]byte, error) {
 	return graphqlPost(url, map[string]string{
 		"x-hasura-admin-secret": secret,
 		"x-hasura-role":         "user",
 		"x-hasura-user-id":      userID,
+		"x-hasura-token-kind":   "browser",
 	}, query, vars)
 }
 

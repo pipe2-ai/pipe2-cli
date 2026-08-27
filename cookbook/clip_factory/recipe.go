@@ -60,7 +60,7 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 	// knobs → quality knobs → branding.
 	inputs := []cookbook.Input{
 		{Name: "source", Type: cookbook.AssetURL, Required: true, CLIArg: "--input",
-			Description: "Source video: a YouTube/social URL, a direct media URL, a local file, or an existing pipe2 asset (URL / /s3 path / id). Remote URLs are resolved on your machine (yt-dlp for streaming/social, plain HTTP for direct links) and uploaded as an asset; the platform never fetches them server-side. yt-dlp + ffmpeg are auto-installed on first use (checksum-verified); set PIPE2_YTDLP_SYSTEM=1 to use ones already on PATH. Use --asset <id> / --no-fetch to skip the fetch for an already-uploaded asset."},
+			Description: "Source video: a YouTube or social URL, a direct media URL, a local file, or an existing pipe2 asset. Remote and local sources are uploaded automatically; use --asset <id> or --no-fetch when the asset is already available."},
 		{Name: "clips", Type: cookbook.String, Default: "", CLIArg: "--clips",
 			Description: `Optional path to a JSON file overriding the auto-picker, shaped [{"context": "...", "start_sec": 42.5, "end_sec": 78.0}, ...]. When set, the highlights step is skipped. Leave empty to let the highlights pipeline pick automatically.`},
 		{Name: "highlights_count", Type: cookbook.Int, Default: int64(5), CLIArg: "--highlights-count",
@@ -77,7 +77,7 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 			Description: "Caption styling preset for every clip."},
 		{Name: "position", Type: cookbook.Enum, Default: positionAuto, CLIArg: "--position",
 			Values:      []string{"auto", "top", "middle", "bottom"},
-			Description: `Vertical anchor for the burned captions. "auto" (default) lets the captions pipeline place the text on the opposite half of the frame from the subject: the reframe step's subject-Y hint feeds the decision when --reformat is set; otherwise auto falls through to "bottom". Set explicitly to override.`},
+			Description: `Vertical caption position. "auto" (default) keeps text away from the main subject when possible and otherwise places it at the bottom. Set a position explicitly to override.`},
 		// Empty (default) means "preserve source aspect, skip the
 		// reframe step entirely". The chain step declares
 		// optional_when_empty: "reformat" so the recipe-page cost
@@ -115,7 +115,7 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 		Inputs:      inputs,
 		Chain: []cookbook.ChainStep{
 			{Pipeline: "transcription", ArtifactKind: cookbook.Text,
-				WhatItDoes: "ElevenLabs Scribe transcribes the full source once: cached on the source hash, so re-runs and every clip after the first are free. The trim reads these words to find each moment."},
+				WhatItDoes: "Transcribes the full source once and reuses that transcript for every selected clip."},
 			// No OptionalWhenEmpty here: that field means "EMPTINESS of the
 			// input skips the step", but highlights is the opposite — it RUNS
 			// in a defaults run (auto-pick) and is skipped when --clips is
@@ -124,18 +124,18 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 			{Pipeline: "highlights", ArtifactKind: cookbook.JSON,
 				WhatItDoes: "Reads the transcript and picks N editorial moments: the auto-pick path. Skipped when --clips supplies a manual JSON list."},
 			{Pipeline: "video-trim", ArtifactKind: cookbook.Video,
-				WhatItDoes: "Per clip: deterministic SRT-slice + ffmpeg-cut to the window highlights picked, snapped to sentence boundaries. Returns the windowed transcript rebased to the clip for the captions step."},
+				WhatItDoes: "Cuts each selected window on sentence boundaries and returns a matching clip transcript for captions."},
 			{Pipeline: "video-reframe", ArtifactKind: cookbook.Video, OptionalWhenEmpty: "reformat",
-				WhatItDoes: "Per clip (only when --reformat is set): reframes to the requested aspect ratio with the lock-and-cut camera director: it frames the active speaker in every shot (from the windowed transcript + CV faces) and cuts cleanly at shot boundaries, never drifting or panning. Skipped by default: the source's native aspect is preserved."},
+				WhatItDoes: "When --reformat is set, reframes each clip to the requested aspect ratio, keeps the active speaker in view, and changes framing cleanly at shot boundaries. Otherwise the source aspect ratio is preserved."},
 			{Pipeline: "captions", ArtifactKind: cookbook.Video,
-				WhatItDoes: "Per clip: burns the windowed transcript onto the clip in your chosen preset, at the anchor --position picks."},
+				WhatItDoes: "Adds the matching transcript to each clip in the chosen caption style and position."},
 			cookbook.WatermarkChainStep(),
 		},
 		ExampleCommand: "pipe2 recipe run clip-factory --input https://www.youtube.com/watch?v=4uzGDAoNOZc --reformat 9:16",
 		AgentPrompt: strings.Join([]string{
 			"Run the pipe2 clip-factory recipe: one long video → N captioned, watermarked clips. Picks moments automatically.",
 			"",
-			"Dispatch: pipe2 recipe run clip-factory --input <video-url-or-local-path> --reformat 9:16",
+			"Run: pipe2 recipe run clip-factory --input <video-url-or-local-path> --reformat 9:16",
 			"",
 			"Tune the picker with --highlights-count N and --highlights-style \"the funniest moments\". Power-user override: --clips path/to/clips.json (JSON array of {\"context\",\"start_sec\",\"end_sec\"}).",
 			"",

@@ -1,5 +1,5 @@
 {
-  "agent_prompt": "Run the pipe2 clip-factory recipe: one long video → N captioned, watermarked clips. Picks moments automatically.\n\nDispatch: pipe2 recipe run clip-factory --input \u003cvideo-url-or-local-path\u003e --reformat 9:16\n\nTune the picker with --highlights-count N and --highlights-style \"the funniest moments\". Power-user override: --clips path/to/clips.json (JSON array of {\"context\",\"start_sec\",\"end_sec\"}).\n\nReturns a JSON array of clip URLs.",
+  "agent_prompt": "Run the pipe2 clip-factory recipe: one long video → N captioned, watermarked clips. Picks moments automatically.\n\nRun: pipe2 recipe run clip-factory --input \u003cvideo-url-or-local-path\u003e --reformat 9:16\n\nTune the picker with --highlights-count N and --highlights-style \"the funniest moments\". Power-user override: --clips path/to/clips.json (JSON array of {\"context\",\"start_sec\",\"end_sec\"}).\n\nReturns a JSON array of clip URLs.",
   "audience": [
     "creator",
     "podcaster",
@@ -10,7 +10,7 @@
   "chain": [
     {
       "pipeline": "transcription",
-      "what_it_does": "ElevenLabs Scribe transcribes the full source once: cached on the source hash, so re-runs and every clip after the first are free. The trim reads these words to find each moment.",
+      "what_it_does": "Transcribes the full source once and reuses that transcript for every selected clip.",
       "artifact_kind": "text"
     },
     {
@@ -20,18 +20,18 @@
     },
     {
       "pipeline": "video-trim",
-      "what_it_does": "Per clip: deterministic SRT-slice + ffmpeg-cut to the window highlights picked, snapped to sentence boundaries. Returns the windowed transcript rebased to the clip for the captions step.",
+      "what_it_does": "Cuts each selected window on sentence boundaries and returns a matching clip transcript for captions.",
       "artifact_kind": "video"
     },
     {
       "pipeline": "video-reframe",
-      "what_it_does": "Per clip (only when --reformat is set): reframes to the requested aspect ratio with the lock-and-cut camera director: it frames the active speaker in every shot (from the windowed transcript + CV faces) and cuts cleanly at shot boundaries, never drifting or panning. Skipped by default: the source's native aspect is preserved.",
+      "what_it_does": "When --reformat is set, reframes each clip to the requested aspect ratio, keeps the active speaker in view, and changes framing cleanly at shot boundaries. Otherwise the source aspect ratio is preserved.",
       "artifact_kind": "video",
       "optional_when_empty": "reformat"
     },
     {
       "pipeline": "captions",
-      "what_it_does": "Per clip: burns the windowed transcript onto the clip in your chosen preset, at the anchor --position picks.",
+      "what_it_does": "Adds the matching transcript to each clip in the chosen caption style and position.",
       "artifact_kind": "video"
     },
     {
@@ -95,7 +95,7 @@
         "bottom"
       ],
       "cli_arg": "--position",
-      "description": "Vertical anchor for the burned captions. \"auto\" (default) lets the captions pipeline place the text on the opposite half of the frame from the subject: the reframe step's subject-Y hint feeds the decision when --reformat is set; otherwise auto falls through to \"bottom\". Set explicitly to override."
+      "description": "Vertical caption position. \"auto\" (default) keeps text away from the main subject when possible and otherwise places it at the bottom. Set a position explicitly to override."
     },
     "preset": {
       "type": "enum",
@@ -128,7 +128,7 @@
       "type": "asset_url",
       "required": true,
       "cli_arg": "--input",
-      "description": "Source video: a YouTube/social URL, a direct media URL, a local file, or an existing pipe2 asset (URL / /s3 path / id). Remote URLs are resolved on your machine (yt-dlp for streaming/social, plain HTTP for direct links) and uploaded as an asset; the platform never fetches them server-side. yt-dlp + ffmpeg are auto-installed on first use (checksum-verified); set PIPE2_YTDLP_SYSTEM=1 to use ones already on PATH. Use --asset \u003cid\u003e / --no-fetch to skip the fetch for an already-uploaded asset."
+      "description": "Source video: a YouTube or social URL, a direct media URL, a local file, or an existing pipe2 asset. Remote and local sources are uploaded automatically; use --asset \u003cid\u003e or --no-fetch when the asset is already available."
     },
     "watermark_scale_pct": {
       "type": "int",

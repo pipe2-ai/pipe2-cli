@@ -29,7 +29,7 @@
     {
       "slug": "dance-reel",
       "title": "One prompt → a vertical AI dance reel",
-      "description": "Generate a labeled dance-move grid with GPT Image 2, hand it to Seedance 2 Pro as a reference so the choreography actually follows the moves, then stitch it into a music-synced vertical reel.",
+      "description": "Generate a labeled dance-move grid, use it as the choreography reference for a music-synced dance, then combine both into a vertical reel.",
       "category": "tutorial",
       "tags": [
         "cli",

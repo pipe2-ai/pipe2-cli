@@ -1,5 +1,5 @@
 {
-  "agent_prompt": "Run the pipe2 dance-reel recipe via the pipe2 CLI. Defaults produce a K-pop breakdancer reel with a vocal-led Eleven Music bed: pass --subject, --style, --moves, --music to customize, or --persona / --watermark-url for branded output. Report the final video URL when done.",
+  "agent_prompt": "Run the pipe2 dance-reel recipe with the pipe2 CLI. The defaults create a K-pop breakdancer reel with a vocal-led Eleven Music soundtrack. Customize it with --subject, --style, --moves, and --music; use --persona or --watermark-url for branded output. Report the final video URL when done.",
   "audience": [
     "creator",
     "agency editor",
@@ -18,7 +18,7 @@
     },
     {
       "pipeline": "music-generator",
-      "what_it_does": "Eleven Music composes a vocal-led K-pop dance bed. Generated FIRST so the dance can be choreographed to its rhythm.",
+      "what_it_does": "Eleven Music composes a vocal-led K-pop soundtrack before the dance is generated, so the choreography can follow its rhythm.",
       "artifact_kind": "audio",
       "with": {
         "duration_sec": "${inputs.dance_seconds}",
@@ -28,12 +28,12 @@
     },
     {
       "pipeline": "image-motion",
-      "what_it_does": "Claude designs a ken-burns pan over the grid so it reads on screen before the dance starts.",
+      "what_it_does": "Turns the move grid into a short on-screen reveal before the dance starts.",
       "artifact_kind": "video"
     },
     {
       "pipeline": "video-generator",
-      "what_it_does": "Seedance 2 Pro generates the dance clip. The grid tags as @image1 for choreography, the music tags as @audio1 for beat-conditioning: choreography is synced to the actual track.",
+      "what_it_does": "Seedance 2 Pro uses the grid as a choreography reference and the soundtrack as a timing reference, so the moves follow both the storyboard and the beat.",
       "artifact_kind": "video",
       "with": {
         "duration_sec": "${inputs.dance_seconds}",
@@ -43,7 +43,7 @@
     },
     {
       "pipeline": "video-reel",
-      "what_it_does": "Claude stitches grid-reveal + dance with a snappy crossfade and the music bed.",
+      "what_it_does": "Combines the grid reveal and dance with a quick crossfade and the finished soundtrack.",
       "artifact_kind": "video"
     },
     {
@@ -52,7 +52,7 @@
       "artifact_kind": "video"
     }
   ],
-  "description": "Generate a labeled dance-move grid with GPT Image 2, hand it to Seedance 2 Pro as a reference so the choreography actually follows the moves, then stitch it into a music-synced vertical reel.",
+  "description": "Generate a labeled dance-move grid, use it as the choreography reference for a music-synced dance, then combine both into a vertical reel.",
   "example_command": "pipe2 recipe run dance-reel",
   "inputs": {
     "aspect_ratio": {
@@ -90,7 +90,7 @@
       "type": "string",
       "default": "K-pop dance anthem at 128 BPM. Punchy four-on-the-floor kick, sidechained glossy synth lead, glittery hi-hats, percussive synth stab on the off-beats. Full energy from bar one, no intro.",
       "cli_arg": "--music",
-      "description": "Mood prompt for the Eleven Music bed."
+      "description": "Mood prompt for the Eleven Music soundtrack."
     },
     "music_url": {
       "type": "asset_url",
@@ -150,7 +150,7 @@
       "description": "Which bundled Pipe2 logo to use when --watermark-url is empty. \"light\" for dark videos, \"dark\" for bright ones; coloured variants match the clip palette."
     }
   },
-  "intro_voiceover": "Most AI dance videos look like slop because the model is guessing the moves frame by frame. The fix is to pre-author a movement grid with GPT Image 2 and pass it to Seedance 2 Pro as a reference image: now it has a storyboard to follow. This recipe chains the grid, the dance, and a matching music bed into one reel.",
+  "intro_voiceover": "AI dance videos often lose recognizable moves when the model has to guess the choreography. Give it a labeled movement grid as a visual storyboard instead, then generate the dance against the finished soundtrack. This recipe combines the grid reveal, the dance, and the matching music into one reel.",
   "published_at": "2026-05-11",
   "schema_version": 1,
   "see_also": [

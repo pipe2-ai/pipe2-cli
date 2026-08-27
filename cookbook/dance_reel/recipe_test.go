@@ -72,12 +72,12 @@ func TestRun_HappyPath(t *testing.T) {
 	mc := &mockClient{
 		t: t,
 		outputs: map[string]map[string]any{
-			"image-generator":  {"image_url": "https://cdn.test/grid.png"},
-			"image-motion":     {"video_url": "https://cdn.test/reveal.mp4"},
-			"video-generator":  {"video_url": "https://cdn.test/dance.mp4"},
-			"music-generator":  {"audio_url": "https://cdn.test/music.mp3"},
-			"video-reel":       {"video_url": "https://cdn.test/reel.mp4"},
-			"watermark":        {"video_url": "https://cdn.test/final-branded.mp4"},
+			"image-generator": {"image_url": "https://cdn.test/grid.png"},
+			"image-motion":    {"video_url": "https://cdn.test/reveal.mp4"},
+			"video-generator": {"video_url": "https://cdn.test/dance.mp4"},
+			"music-generator": {"audio_url": "https://cdn.test/music.mp3"},
+			"video-reel":      {"video_url": "https://cdn.test/reel.mp4"},
+			"watermark":       {"video_url": "https://cdn.test/final-branded.mp4"},
 		},
 	}
 	r := &dance_reel.Recipe{}
@@ -120,7 +120,7 @@ func TestRun_HappyPath(t *testing.T) {
 		t.Errorf("grid model = %v, want gpt-image-2", got)
 	}
 
-	// Seedance Pro pinned, conditioned on the music as reference_audio.
+	// Seedance Pro pinned, conditioned on the music through reference_audios.
 	if got := mc.calls[3].inputs["model"]; got != "seedance-2-0-pro" {
 		t.Errorf("dance model = %v, want seedance-2-0-pro", got)
 	}
@@ -131,8 +131,9 @@ func TestRun_HappyPath(t *testing.T) {
 	if got := mc.calls[3].inputs["audio"]; got != false {
 		t.Errorf("dance audio = %v, want false", got)
 	}
-	if got := mc.calls[3].inputs["reference_audio_url"]; got != "https://cdn.test/music.mp3" {
-		t.Errorf("dance reference_audio_url = %v, want music.mp3 (audio-conditioned path)", got)
+	audioRefs, _ := mc.calls[3].inputs["reference_audios"].([]any)
+	if len(audioRefs) != 1 || audioRefs[0] != "https://cdn.test/music.mp3" {
+		t.Errorf("dance reference_audios = %v, want [music.mp3] (audio-conditioned path)", audioRefs)
 	}
 
 	// Reel: 2 video URLs.
