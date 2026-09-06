@@ -404,6 +404,14 @@ func peek(r io.Reader, n int) ([]byte, error) {
 // the rare case where the URL path carries no usable basename.
 func extForContentType(ct string) string {
 	switch ct {
+	case "image/jpeg":
+		return ".jpg"
+	case "image/png":
+		return ".png"
+	case "image/webp":
+		return ".webp"
+	case "image/gif":
+		return ".gif"
 	case "video/mp4":
 		return ".mp4"
 	case "video/webm":

@@ -1,0 +1,96 @@
+{
+  "agent_prompt": "Run the pipe2 hidden-world-reveal recipe. Defaults create an eight-second silent vertical reveal of a tiny ocean inside a hinged wooden box. Customize --container, --world, and --opening together to create another discovery. Report the final video URL.",
+  "audience": [
+    "creator",
+    "motion designer",
+    "social team"
+  ],
+  "category": "concept",
+  "chain": [
+    {
+      "pipeline": "image-generator",
+      "what_it_does": "Builds the open container and its complete hidden world first, with room for the moving part to close over it.",
+      "artifact_kind": "image",
+      "with": {
+        "model": "gpt-image-2",
+        "quality": "auto"
+      }
+    },
+    {
+      "pipeline": "image-editor",
+      "what_it_does": "Closes the same container over the existing world, leaving a blue-lit gap without changing the fixed geometry.",
+      "artifact_kind": "image",
+      "with": {
+        "model": "gemini-3-1-flash-image"
+      }
+    },
+    {
+      "pipeline": "video-generator",
+      "what_it_does": "Connects the opening and payoff frames with one continuous opening motion, then holds the visible world for two seconds. The result is deliberately silent.",
+      "artifact_kind": "video",
+      "with": {
+        "audio": false,
+        "duration": "${inputs.seconds}",
+        "model": "minimax-h3",
+        "resolution": "768p"
+      }
+    }
+  ],
+  "description": "Create a silent reveal of a tiny moonlit ocean inside a hinged wooden box: build the open scene, close its lid with an image edit, then animate the discovery.",
+  "example_command": "pipe2 recipe run hidden-world-reveal",
+  "inputs": {
+    "aspect_ratio": {
+      "type": "enum",
+      "default": "9:16",
+      "values": [
+        "9:16",
+        "16:9",
+        "1:1"
+      ],
+      "cli_arg": "--ratio",
+      "description": "Frame shape shared by both stills and the finished reveal."
+    },
+    "container": {
+      "type": "string",
+      "default": "a small deep unpainted wooden box with one rear-hinged lid",
+      "cli_arg": "--container",
+      "description": "One recognizable container with a simple opening and room for a miniature scene."
+    },
+    "opening": {
+      "type": "string",
+      "default": "the solid lid rotates upward around its fixed rear hinge to a nearly vertical open position while the box and its contents remain stationary",
+      "cli_arg": "--opening",
+      "description": "One mechanical opening motion that fits the container, such as a drawer sliding or a lid lifting."
+    },
+    "seconds": {
+      "type": "int",
+      "default": 8,
+      "min": 6,
+      "max": 12,
+      "cli_arg": "--seconds",
+      "description": "Six to twelve seconds; the opening finishes before the final two-second payoff hold."
+    },
+    "world": {
+      "type": "string",
+      "default": "a miniature moonlit ocean with one tiny ivory lighthouse on a dark rock and a small curling wave",
+      "cli_arg": "--world",
+      "description": "The hidden interior, with one large readable feature rather than many tiny details."
+    }
+  },
+  "intro_voiceover": "The blue light in the gap is the question. The tiny ocean inside is the answer. Build that world first, then hide it beneath the same lid. The animation uncovers a place that already exists instead of inventing one as the box opens.",
+  "published_at": "2026-09-05",
+  "schema_version": 1,
+  "see_also": [
+    "tactile-motion-study"
+  ],
+  "slug": "hidden-world-reveal",
+  "tags": [
+    "reveal",
+    "miniature-world",
+    "surreal",
+    "vertical-video",
+    "short-form"
+  ],
+  "title": "An ordinary box opens onto a tiny impossible world",
+  "updated_at": "2026-09-06"
+}

@@ -1,0 +1,99 @@
+{
+  "agent_prompt": "Run the pipe2 tactile-motion-study recipe with the pipe2 CLI. Use the defaults for a five-second vertical sample, or set --material, --action, --title, --ratio, and --seconds. Report the final video URL.",
+  "audience": [
+    "creator",
+    "motion designer",
+    "social team",
+    "AI agent"
+  ],
+  "category": "concept",
+  "chain": [
+    {
+      "pipeline": "image-generator",
+      "what_it_does": "Creates a text-free opening keyframe with the material centered and the interaction staged just before contact.",
+      "artifact_kind": "image",
+      "with": {
+        "model": "gemini-3-1-flash-image",
+        "quality": "fast"
+      }
+    },
+    {
+      "pipeline": "video-generator",
+      "what_it_does": "MiniMax H3 preserves the keyframe while performing one controlled, silent deformation in a locked macro shot.",
+      "artifact_kind": "video",
+      "with": {
+        "audio": false,
+        "duration": "${inputs.seconds}",
+        "model": "minimax-h3",
+        "resolution": "768p"
+      }
+    },
+    {
+      "pipeline": "text-card",
+      "what_it_does": "Burns the supplied title into the finished clip and verifies that every character was preserved.",
+      "artifact_kind": "video"
+    }
+  ],
+  "description": "Generate a text-free material keyframe, animate one controlled MiniMax H3 deformation without audio, and finish with a verified verbatim title overlay.",
+  "example_command": "pipe2 recipe run tactile-motion-study",
+  "inputs": {
+    "action": {
+      "type": "string",
+      "default": "compressed once by a smooth porcelain stamp, rebounds, and releases tiny iridescent bubbles",
+      "cli_arg": "--action",
+      "description": "One visible deformation with a clear start, response, and settled finish."
+    },
+    "aspect_ratio": {
+      "type": "enum",
+      "default": "9:16",
+      "values": [
+        "9:16",
+        "16:9",
+        "1:1",
+        "4:3",
+        "3:4"
+      ],
+      "cli_arg": "--ratio",
+      "description": "Frame shape for the keyframe, animation, and final title treatment."
+    },
+    "material": {
+      "type": "string",
+      "default": "pearlescent foam pebble",
+      "cli_arg": "--material",
+      "description": "The material sample shown in the opening frame and preserved through the motion."
+    },
+    "seconds": {
+      "type": "int",
+      "default": 5,
+      "min": 4,
+      "max": 15,
+      "cli_arg": "--seconds",
+      "description": "MiniMax H3 clip duration from 4 to 15 seconds."
+    },
+    "title": {
+      "type": "string",
+      "default": "SOFT MATTER STUDY",
+      "cli_arg": "--title",
+      "description": "The exact title burned into the final video after generation."
+    }
+  },
+  "intro_voiceover": "A single generative prompt has to invent the material, movement, camera, and typography at once, so small tactile clips often drift or grow broken text. Lock the material into a clean opening frame, animate one physical beat, then add the title after the motion is finished.",
+  "published_at": "2026-09-01",
+  "schema_version": 1,
+  "see_also": [
+    "dance-reel"
+  ],
+  "slug": "tactile-motion-study",
+  "tags": [
+    "cli",
+    "pipelines",
+    "tactile",
+    "surreal-asmr",
+    "minimax-h3",
+    "vertical-video",
+    "motion-study",
+    "text-card"
+  ],
+  "title": "Material + deformation → tactile motion study",
+  "updated_at": "2026-09-01"
+}

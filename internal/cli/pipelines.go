@@ -16,9 +16,9 @@ func newPipelinesCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:     "pipelines",
 		Aliases: []string{"pipeline"},
-		Short:   "List and run Pipe2.ai pipelines",
+		Short:   "List, estimate, and run Pipe2.ai pipelines",
 	}
-	c.AddCommand(newPipelinesListCmd(), newPipelinesRunCmd())
+	c.AddCommand(newPipelinesListCmd(), newPipelinesEstimateCmd(), newPipelinesRunCmd())
 	return c
 }
 
@@ -49,6 +49,44 @@ func newPipelinesListCmd() *cobra.Command {
 	}
 	c.Flags().IntVar(&limit, "limit", 20, "number of pipelines per page")
 	c.Flags().IntVar(&page, "page", 1, "page number (1-based)")
+	return c
+}
+
+func newPipelinesEstimateCmd() *cobra.Command {
+	var slug, inputFile, inputStr string
+	c := &cobra.Command{
+		Use:   "estimate",
+		Short: "Estimate pipeline credit cost",
+		Long: `Estimate the credit reservation and expected charge for a pipeline input without dispatching a run.
+
+Examples:
+  pipe2 pipelines estimate --pipeline video-generator --input ./input.json
+  pipe2 pipelines estimate --pipeline video-generator --input-json '{"prompt":"a cat"}'`,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if slug == "" {
+				return &ExitError{Code: ExitUsage, Err: fmt.Errorf("--pipeline is required")}
+			}
+			raw, err := readInput(inputFile, inputStr)
+			if err != nil {
+				return &ExitError{Code: ExitUsage, Err: err}
+			}
+			client, err := MustClient()
+			if err != nil {
+				return err
+			}
+			resp, err := pipe2.EstimatePipelineCost(cmd.Context(), client, slug, json.RawMessage(raw))
+			if err != nil {
+				return classifyAPIError(err)
+			}
+			if resp.Estimate_pipeline_cost == nil {
+				return fmt.Errorf("pipeline cost estimate returned no result")
+			}
+			return Out(resp.Estimate_pipeline_cost)
+		},
+	}
+	c.Flags().StringVar(&slug, "pipeline", "", "pipeline slug (required)")
+	c.Flags().StringVar(&inputFile, "input", "", `path to JSON input file, or "-" for stdin`)
+	c.Flags().StringVar(&inputStr, "input-json", "", "inline JSON input")
 	return c
 }
 

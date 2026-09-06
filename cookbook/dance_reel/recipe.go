@@ -181,6 +181,7 @@ func (r *Recipe) Run(ctx *cookbook.Context) error {
 	//    the moves before the dance begins. Claude picks pan/zoom.
 	reveal, err := ctx.RunPipeline("image-motion", cookbook.Inputs{
 		"image_url":    gridURL,
+		"aspect_ratio": ratio,
 		"instructions": "Slow pan across the dance move grid, ending on a centered zoom. About 3 seconds.",
 	})
 	if err != nil {
@@ -205,18 +206,18 @@ func (r *Recipe) Run(ctx *cookbook.Context) error {
 	//    its cells instead of treating it as a generic style anchor.
 	refImages := []string{gridURL}
 	subjectClause := subject
-	choreoRef := "@image1"
+	choreoRef := "@Image1"
 	if personaURL != "" {
 		refImages = []string{personaURL, gridURL}
-		subjectClause = "the character shown in @image1 (preserve face, hair, makeup, and outfit exactly across every frame)"
-		choreoRef = "@image2"
+		subjectClause = "the character shown in @Image1 (preserve face, hair, makeup, and outfit exactly across every frame)"
+		choreoRef = "@Image2"
 	}
 	dancePrompt := choreoRef + " is a 16-panel reference grid where each cell shows one labeled dance move. " +
 		"Treat " + choreoRef + " as a choreography sequence to follow, not a style anchor. " +
 		"Single continuous take: " + subjectClause + " performs the moves shown in " + choreoRef + " in this exact order: " + moves + ". " +
 		"Each named move must be visibly executed and recognizable as the labeled move from the grid: don't substitute with generic dance gestures. "
 	if musicURL != "" {
-		dancePrompt += "Synchronize the choreography to the rhythm and energy of @audio1. "
+		dancePrompt += "Synchronize the choreography to the rhythm and energy of @Audio1. "
 	}
 	dancePrompt += "Style: " + style + ". " +
 		"Cinematic 4k, dynamic tracking shot, neon urban street background, high energy, sharp choreography, no slop."

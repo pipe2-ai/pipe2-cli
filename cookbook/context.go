@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -650,27 +651,83 @@ func WithWhatItDoes(s string) RunOption { return func(o *runOpts) { o.whatItDoes
 
 // Capture downloads the asset at url into PIPE2_RECIPE_OUT_DIR (when
 // the runner was invoked with --capture-to). Step is the chain step
-// number — used as the filename's index. Extension is taken from the
-// URL's path; auto-detected if absent.
+// number — used as the filename's index. Image extensions come from the
+// downloaded bytes; other formats retain their URL extension.
 //
-// No-op when capture is disabled, so recipes can call Capture
+// No-op during dry runs or when capture is disabled, so recipes can call Capture
 // unconditionally without testing for the env var.
 func (c *Context) Capture(step int, url string) error {
-	if c.captureDir == "" || url == "" {
+	return c.capture(fmt.Sprintf("step-%d", step), url)
+}
+
+// CaptureFinal downloads the URL recorded by SetOutput as hero.<ext>.
+// The recipe runner calls it automatically for live --capture-to runs so
+// downstream previews never have to guess which intermediate was final.
+func (c *Context) CaptureFinal(url string) error {
+	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "/s3/") {
+		return nil
+	}
+	return c.capture("hero", url)
+}
+
+func (c *Context) capture(prefix, url string) error {
+	if c.dryRun || c.captureDir == "" || url == "" {
 		return nil
 	}
 	ext := strings.TrimPrefix(filepath.Ext(strings.SplitN(url, "?", 2)[0]), ".")
 	if ext == "" {
 		ext = "bin"
 	}
-	prefix := fmt.Sprintf("step-%d", step)
 	if c.substepPrefix != "" {
 		prefix = fmt.Sprintf("%s-%s", c.substepPrefix, prefix)
 	}
-	out := filepath.Join(c.captureDir, prefix+"."+ext)
+	base := filepath.Join(c.captureDir, prefix)
+	if err := os.MkdirAll(filepath.Dir(base), 0o755); err != nil {
+		return err
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(base), ".capture-*")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	if _, err := DownloadFile(c.ctx, ResolveStorageURL(url, c.storageURL), tmpPath); err != nil {
+		return err
+	}
+	f, err := os.Open(tmpPath)
+	if err != nil {
+		return err
+	}
+	head, err := peek(f, 512)
+	f.Close()
+	if err != nil {
+		return err
+	}
+	// Providers can serve JPEG bytes behind a .png URL and Content-Type header.
+	// Keep audio/video suffixes: sniffing cannot reliably distinguish M4A/MP4.
+	switch ct := http.DetectContentType(head); ct {
+	case "image/jpeg", "image/png", "image/webp", "image/gif":
+		ext = strings.TrimPrefix(extForContentType(ct), ".")
+	}
+	out := base + "." + ext
 	c.Logf("  capturing → %s", out)
-	_, err := DownloadFile(c.ctx, ResolveStorageURL(url, c.storageURL), out)
-	return err
+	if err := os.Rename(tmpPath, out); err != nil {
+		return err
+	}
+	// A resumed capture can change format. Remove only this ordinal's stale
+	// primary files, never its .poster.jpg or .fN.jpg preview derivatives.
+	for _, oldExt := range []string{"mp4", "webp", "png", "jpg", "jpeg", "gif", "m4a", "txt", "json", "bin"} {
+		if oldExt == ext {
+			continue
+		}
+		if err := os.Remove(base + "." + oldExt); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+	return nil
 }
 
 // Result is what RunPipeline returns: the structured output of the

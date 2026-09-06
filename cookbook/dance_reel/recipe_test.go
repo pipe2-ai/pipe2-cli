@@ -3,6 +3,7 @@ package dance_reel_test
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -119,6 +120,9 @@ func TestRun_HappyPath(t *testing.T) {
 	if got := mc.calls[0].inputs["model"]; got != "gpt-image-2" {
 		t.Errorf("grid model = %v, want gpt-image-2", got)
 	}
+	if got := mc.calls[2].inputs["aspect_ratio"]; got != "9:16" {
+		t.Errorf("reveal aspect_ratio = %v, want 9:16", got)
+	}
 
 	// Seedance Pro pinned, conditioned on the music through reference_audios.
 	if got := mc.calls[3].inputs["model"]; got != "seedance-2-0-pro" {
@@ -130,6 +134,9 @@ func TestRun_HappyPath(t *testing.T) {
 	}
 	if got := mc.calls[3].inputs["audio"]; got != false {
 		t.Errorf("dance audio = %v, want false", got)
+	}
+	if got, _ := mc.calls[3].inputs["prompt"].(string); !strings.Contains(got, "@Image1") || !strings.Contains(got, "@Audio1") {
+		t.Errorf("dance prompt does not use canonical Seedance reference tags: %q", got)
 	}
 	audioRefs, _ := mc.calls[3].inputs["reference_audios"].([]any)
 	if len(audioRefs) != 1 || audioRefs[0] != "https://cdn.test/music.mp3" {

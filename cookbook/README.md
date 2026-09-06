@@ -61,8 +61,12 @@ that fails if a committed `recipe.json` no longer matches `Manifest()`.
 
 | Slug | Tutorial |
 |---|---|
+| [`product-world-tour`](./product_world_tour/) | One product, three worlds: a match-cut campaign |
+| [`question-to-reel`](./question_to_reel/) | Audience question → animated visual answer |
 | [`clip-factory`](./clip_factory/) | Long-form video → N captioned shorts |
 | [`dance-reel`](./dance_reel/) | Subject → AI dance reel with captions |
+| [`hidden-world-reveal`](./hidden_world_reveal/) | Ordinary container → impossible miniature world reveal |
+| [`tactile-motion-study`](./tactile_motion_study/) | Material + deformation → tactile motion study |
 
 ## Adding a new recipe
 

@@ -1,0 +1,88 @@
+{
+  "agent_prompt": "Run the question-to-reel recipe with the pipe2 CLI. Supply a question, a fact-checked answer, matching visual beats and a footage query. Review the diagrams, selected footage and final captions, then report the final video URL and footage attribution.",
+  "audience": [
+    "creator",
+    "educator",
+    "social team"
+  ],
+  "category": "tutorial",
+  "chain": [
+    {
+      "pipeline": "audio-generator",
+      "what_it_does": "Reads the question and approved answer with MiniMax Speech 2.8 Turbo.",
+      "artifact_kind": "audio",
+      "with": {
+        "model": "minimax-speech-2-8-turbo"
+      }
+    },
+    {
+      "pipeline": "transcription",
+      "what_it_does": "Measures the narration and creates the transcript used for caption timing.",
+      "artifact_kind": "text"
+    },
+    {
+      "pipeline": "footage-search",
+      "what_it_does": "Finds stock footage; selects two distinct clips long enough to cover the narration and records their sources.",
+      "artifact_kind": "none"
+    },
+    {
+      "pipeline": "video-reel",
+      "what_it_does": "Assembles the two clips in vertical framing with narration, using the measured audio length.",
+      "artifact_kind": "video"
+    },
+    {
+      "pipeline": "text-card",
+      "what_it_does": "Animates the approved explanatory labels, arrows, and shapes over the footage.",
+      "artifact_kind": "video"
+    },
+    {
+      "pipeline": "captions",
+      "what_it_does": "Adds bold yellow phrase captions below the diagrams, synchronized to the answer.",
+      "artifact_kind": "video"
+    }
+  ],
+  "description": "Turn your approved answer and visual beats into a narrated vertical explainer with stock footage, timed diagrams, and synchronized captions.",
+  "example_command": "pipe2 recipe run question-to-reel",
+  "inputs": {
+    "answer": {
+      "type": "string",
+      "default": "Clouds contain tiny water droplets. Those droplets fall so slowly that rising air can keep them suspended. When droplets grow large enough, they can fall through that rising air as rain. A cloud isn't weightless; its droplets are just small.",
+      "cli_arg": "--answer",
+      "description": "Your fact-checked answer. Keep question plus answer between 20 and 60 words."
+    },
+    "footage_query": {
+      "type": "string",
+      "default": "vertical clouds sky",
+      "cli_arg": "--footage_query",
+      "description": "Concrete portrait stock-footage subject matching your answer."
+    },
+    "question": {
+      "type": "string",
+      "default": "Why don't clouds fall?",
+      "cli_arg": "--question",
+      "description": "Audience question, read aloud and shown on screen. Maximum 80 characters."
+    },
+    "visual_beats": {
+      "type": "string",
+      "default": "Use these fractions of total duration:\n0–12%: show the question immediately on two balanced lines.\n12–24%: TINY WATER DROPS heading and six cyan dots in a loose cluster, gently drifting down.\n24–51%: RISING AIR / HOLDS THEM UP. Yellow arrows repeatedly rise on either side of the tiny dots; the dots stay nearly suspended.\n51–80%: BIGGER DROPS / FALL AS RAIN. Three waves of three larger blue drops fall; remove the upward arrows.\n80–100%: NOT WEIGHTLESS. / JUST TINY. Compare small suspended dots with an upward arrow on the left and two larger falling drops on the right.\nThese are illustrative diagrams, not measured sizes or a claim that clouds contain no ice.",
+      "cli_arg": "--visual_beats",
+      "description": "Approved labels and simple diagrams, with timing as percentages of narration duration. Supply matching beats when changing the question or answer."
+    }
+  },
+  "intro_voiceover": "Show the answer, not just the words. Supply the facts and visual beats; narration, stock footage, moving diagrams and captions turn them into an explainer you can reuse across your channels.",
+  "published_at": "2026-09-06",
+  "schema_version": 1,
+  "see_also": [
+    "clip-factory"
+  ],
+  "slug": "question-to-reel",
+  "tags": [
+    "questions",
+    "explainer",
+    "b-roll",
+    "captions",
+    "vertical-video"
+  ],
+  "title": "Audience question → animated visual answer",
+  "updated_at": "2026-09-06"
+}

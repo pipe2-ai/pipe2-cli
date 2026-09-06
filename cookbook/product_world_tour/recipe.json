@@ -1,0 +1,91 @@
+{
+  "agent_prompt": "Run the pipe2 product-world-tour recipe to create an original perfume concept in three imaginary campaign sets. Customize --product and --scene-one, --scene-two, --scene-three together for another concept. Report the final video URL and the three reference images.",
+  "audience": [
+    "designer",
+    "creator",
+    "social team"
+  ],
+  "category": "concept",
+  "chain": [
+    {
+      "pipeline": "image-generator",
+      "what_it_does": "Designs the product in its opening campaign set, establishing the silhouette, camera and framing.",
+      "artifact_kind": "image",
+      "with": {
+        "model": "gpt-image-2",
+        "quality": "auto"
+      }
+    },
+    {
+      "pipeline": "image-editor",
+      "what_it_does": "Uses the original image to place the same product in the second set without redesigning it.",
+      "artifact_kind": "image",
+      "with": {
+        "model": "gemini-3-1-flash-image"
+      }
+    },
+    {
+      "pipeline": "image-editor",
+      "what_it_does": "Returns to the original product reference for the final set, avoiding accumulated changes from successive edits.",
+      "artifact_kind": "image",
+      "with": {
+        "model": "gemini-3-1-flash-image"
+      }
+    },
+    {
+      "pipeline": "video-generator",
+      "what_it_does": "Animates the three ordered references with hard match cuts, subtle environmental motion and an unhurried final hold. The campaign is intentionally silent.",
+      "artifact_kind": "video",
+      "with": {
+        "audio": false,
+        "duration": "9",
+        "model": "seedance-2-5",
+        "resolution": "720p"
+      }
+    }
+  ],
+  "description": "Design an original product, restage it in two contrasting worlds, then turn the three connected images into a nine-second vertical campaign.",
+  "example_command": "pipe2 recipe run product-world-tour",
+  "inputs": {
+    "product": {
+      "type": "string",
+      "default": "one unbranded cobalt-blue sculptural perfume bottle, a squat rounded rectangular opaque glass body with a single large polished silver sphere cap",
+      "cli_arg": "--product",
+      "description": "An original product concept with a simple, distinctive silhouette; avoid labels and tiny markings."
+    },
+    "scene_one": {
+      "type": "string",
+      "default": "on a pale peach sand dune, surrounded by three enormous curved cobalt-blue petals under a warm apricot sky",
+      "cli_arg": "--scene-one",
+      "description": "The immediately visible opening set."
+    },
+    "scene_three": {
+      "type": "string",
+      "default": "on a white salt-flat pedestal above a sea of clouds at blue hour, with one huge luminous pale moon behind it",
+      "cli_arg": "--scene-three",
+      "description": "The most expansive final set, held clearly for the payoff."
+    },
+    "scene_two": {
+      "type": "string",
+      "default": "on a flat mirror-black stone in a lush emerald forest, surrounded by giant wet fern fronds and soft drifting mist",
+      "cli_arg": "--scene-two",
+      "description": "A contrasting environment, preserving the original product and composition."
+    }
+  },
+  "intro_voiceover": "The scenery changes. The product stays familiar. Matching its silhouette and position gives each cut a visual anchor, so three imaginary sets read as one campaign instead of three unrelated generations.",
+  "published_at": "2026-09-06",
+  "schema_version": 1,
+  "see_also": [
+    "hidden-world-reveal",
+    "tactile-motion-study"
+  ],
+  "slug": "product-world-tour",
+  "tags": [
+    "product",
+    "match-cut",
+    "campaign",
+    "vertical-video"
+  ],
+  "title": "One product, three worlds: a match-cut campaign",
+  "updated_at": "2026-09-06"
+}

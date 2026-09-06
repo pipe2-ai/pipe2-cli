@@ -15,7 +15,7 @@ structured data. The article page renders it as:
 | `intro_voiceover` | hero hook paragraph (the *why*) |
 | `chain[].what_it_does` | the step-by-step Walkthrough |
 | `inputs` | the Run It panel + manifest |
-| `example_command`, `agent_prompt` | the Run It tabs |
+| `example_command`, `agent_prompt` | the Run it panel |
 | `samples` | the sample previews |
 
 **`README.md`** is the narrative the data can't carry: *why* the recipe

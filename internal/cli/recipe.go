@@ -234,13 +234,18 @@ func newRecipeRunCmd() *cobra.Command {
 				}
 			}
 			if final := rctx.FinalOutput(); final != "" {
+				if !dryRun {
+					if err := rctx.CaptureFinal(final); err != nil {
+						return &ExitError{Code: ExitGeneric, Err: fmt.Errorf("capture final output: %w", err)}
+					}
+				}
 				fmt.Fprintln(os.Stdout, final)
 			}
 			return nil
 		},
 	}
 	c.Flags().StringVar(&captureDir, "capture-to", "",
-		"directory where Capture writes per-step artifacts (used by the asset-production pipeline)")
+		"directory where Capture writes per-step artifacts and the final hero output")
 	c.Flags().BoolVar(&resume, "resume", false,
 		"reuse step outputs recorded in <capture-to>/state.json from a prior run; only steps not yet recorded are dispatched")
 	c.Flags().BoolVar(&dryRun, "dry-run", false,

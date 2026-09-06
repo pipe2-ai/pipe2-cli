@@ -40,6 +40,9 @@ func TestSchemaCommandTreeShape(t *testing.T) {
 	if !strings.Contains(string(data), `"name":"pipelines"`) {
 		t.Errorf("marshaled schema missing pipelines: %s", data[:200])
 	}
+	if !strings.Contains(string(data), `"path":"pipe2 pipelines estimate"`) {
+		t.Errorf("marshaled schema missing pipelines estimate")
+	}
 }
 
 // TestExitCodeSchemaIsStable freezes the exit code contract so an agent

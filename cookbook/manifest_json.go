@@ -36,6 +36,11 @@ func (m Manifest) MarshalJSON() ([]byte, error) {
 	// versions; the article reads them by-name anyway.
 	inputs := make([]Input, len(m.Inputs))
 	copy(inputs, m.Inputs)
+	for i := range inputs {
+		if inputs[i].CLIArg == "" {
+			inputs[i].CLIArg = inputs[i].CLIFlag()
+		}
+	}
 	sort.Slice(inputs, func(i, j int) bool { return inputs[i].Name < inputs[j].Name })
 
 	obj := map[string]json.RawMessage{}

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-20T00:00:00Z",
+  "generated_at": "2026-09-06T00:00:00Z",
   "recipes": [
     {
       "slug": "clip-factory",
@@ -44,6 +44,72 @@
       "schema_version": 1,
       "chain_length": 6,
       "updatedAt": "2026-05-11"
+    },
+    {
+      "slug": "hidden-world-reveal",
+      "title": "An ordinary box opens onto a tiny impossible world",
+      "description": "Create a silent reveal of a tiny moonlit ocean inside a hinged wooden box: build the open scene, close its lid with an image edit, then animate the discovery.",
+      "category": "concept",
+      "tags": [
+        "reveal",
+        "miniature-world",
+        "surreal",
+        "vertical-video",
+        "short-form"
+      ],
+      "schema_version": 1,
+      "chain_length": 3,
+      "updatedAt": "2026-09-06"
+    },
+    {
+      "slug": "product-world-tour",
+      "title": "One product, three worlds: a match-cut campaign",
+      "description": "Design an original product, restage it in two contrasting worlds, then turn the three connected images into a nine-second vertical campaign.",
+      "category": "concept",
+      "tags": [
+        "product",
+        "match-cut",
+        "campaign",
+        "vertical-video"
+      ],
+      "schema_version": 1,
+      "chain_length": 4,
+      "updatedAt": "2026-09-06"
+    },
+    {
+      "slug": "question-to-reel",
+      "title": "Audience question → animated visual answer",
+      "description": "Turn your approved answer and visual beats into a narrated vertical explainer with stock footage, timed diagrams, and synchronized captions.",
+      "category": "tutorial",
+      "tags": [
+        "questions",
+        "explainer",
+        "b-roll",
+        "captions",
+        "vertical-video"
+      ],
+      "schema_version": 1,
+      "chain_length": 6,
+      "updatedAt": "2026-09-06"
+    },
+    {
+      "slug": "tactile-motion-study",
+      "title": "Material + deformation → tactile motion study",
+      "description": "Generate a text-free material keyframe, animate one controlled MiniMax H3 deformation without audio, and finish with a verified verbatim title overlay.",
+      "category": "concept",
+      "tags": [
+        "cli",
+        "pipelines",
+        "tactile",
+        "surreal-asmr",
+        "minimax-h3",
+        "vertical-video",
+        "motion-study",
+        "text-card"
+      ],
+      "schema_version": 1,
+      "chain_length": 3,
+      "updatedAt": "2026-09-01"
     }
   ],
   "schema_version": 1

@@ -161,7 +161,7 @@ pipe2 help                           # human-readable
 - [`pipe2 assets`](#pipe2-assets) — Upload, inspect, and delete assets
 - [`pipe2 auth`](#pipe2-auth) — Manage Pipe2.ai authentication
 - [`pipe2 credits`](#pipe2-credits) — Credit balance and history
-- [`pipe2 pipelines`](#pipe2-pipelines) — List and run Pipe2.ai pipelines
+- [`pipe2 pipelines`](#pipe2-pipelines) — List, estimate, and run Pipe2.ai pipelines
 - [`pipe2 recipe`](#pipe2-recipe) — Run cookbook recipes
 - [`pipe2 runs`](#pipe2-runs) — Inspect pipeline runs
 - [`pipe2 schema`](#pipe2-schema) — Dump a machine-readable schema of every command, flag, and exit code
@@ -311,11 +311,33 @@ pipe2 credits pipe2 credits balance
 
 <!-- anchor: pipe2-pipelines -->
 
-List and run Pipe2.ai pipelines
+List, estimate, and run Pipe2.ai pipelines
 
 ```
 pipe2 pipe2 pipelines
 ```
+
+### `pipe2 pipelines estimate`
+
+<!-- anchor: pipe2-pipelines-estimate -->
+
+Estimate pipeline credit cost
+
+Estimate the credit reservation and expected charge for a pipeline input without dispatching a run.
+
+Examples:
+  pipe2 pipelines estimate --pipeline video-generator --input ./input.json
+  pipe2 pipelines estimate --pipeline video-generator --input-json '{"prompt":"a cat"}'
+
+```
+pipe2 pipelines pipe2 pipelines estimate [flags]
+```
+
+**Flags:**
+
+- `--input` (`string`) — path to JSON input file, or "-" for stdin
+- `--input-json` (`string`) — inline JSON input
+- `--pipeline` (`string`) — pipeline slug (required)
 
 ### `pipe2 pipelines list`
 
@@ -439,7 +461,7 @@ pipe2 recipe pipe2 recipe run <slug> [--<input> <value> ...] [flags]
 **Flags:**
 
 - `--asset` (`string`) — shortcut for an already-uploaded source asset: equivalent to setting the recipe's `source` input to <id-or-url> with --no-fetch
-- `--capture-to` (`string`) — directory where Capture writes per-step artifacts (used by the asset-production pipeline)
+- `--capture-to` (`string`) — directory where Capture writes per-step artifacts and the final hero output
 - `--cookies` (`string`) — path to a Netscape cookies.txt file for the client-side yt-dlp fetch (yt-dlp --cookies); the headless/CI alternative to --cookies-from-browser
 - `--cookies-from-browser` (`string`) — browser to load cookies from for the client-side yt-dlp fetch of a remote --input (yt-dlp --cookies-from-browser) — the fix for YouTube's "Sign in to confirm you're not a bot" wall. e.g. chrome, firefox, safari, edge, or chrome:Default
 - `--dry-run` (`bool`) — resolve inputs and log the chain that would run, but skip dispatch (no credits charged, no auth required)
