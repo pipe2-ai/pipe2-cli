@@ -16,9 +16,9 @@ func newPipelinesCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:     "pipelines",
 		Aliases: []string{"pipeline"},
-		Short:   "List, estimate, and run Pipe2.ai pipelines",
+		Short:   "List, inspect, estimate, and run Pipe2.ai pipelines",
 	}
-	c.AddCommand(newPipelinesListCmd(), newPipelinesEstimateCmd(), newPipelinesRunCmd())
+	c.AddCommand(newPipelinesListCmd(), newPipelinesGetCmd(), newPipelinesEstimateCmd(), newPipelinesRunCmd())
 	return c
 }
 
@@ -50,6 +50,33 @@ func newPipelinesListCmd() *cobra.Command {
 	c.Flags().IntVar(&limit, "limit", 20, "number of pipelines per page")
 	c.Flags().IntVar(&page, "page", 1, "page number (1-based)")
 	return c
+}
+
+func newPipelinesGetCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "get <slug>",
+		Short: "Show a pipeline's input and output schemas",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+				return &ExitError{Code: ExitUsage, Err: err}
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := MustClient()
+			if err != nil {
+				return err
+			}
+			resp, err := pipe2.GetPipelineBySlug(cmd.Context(), client, args[0])
+			if err != nil {
+				return classifyAPIError(err)
+			}
+			if len(resp.Pipelines) == 0 {
+				return &ExitError{Code: ExitNotFound, Err: fmt.Errorf("pipeline %s not found", args[0])}
+			}
+			return Out(resp.Pipelines[0])
+		},
+	}
 }
 
 func newPipelinesEstimateCmd() *cobra.Command {

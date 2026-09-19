@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -91,6 +92,7 @@ func newRecipeInfoCmd() *cobra.Command {
 func newRecipeRunCmd() *cobra.Command {
 	var captureDir string
 	var resume bool
+	var stopBeforeStep int
 	var dryRun bool
 	var estimate bool
 	var noFetch bool
@@ -109,6 +111,9 @@ func newRecipeRunCmd() *cobra.Command {
 				return &ExitError{Code: ExitNotFound, Err: fmt.Errorf("no recipe named %q (try `pipe2 recipe list`)", args[0])}
 			}
 			m := r.Manifest()
+			if stopBeforeStep < 0 || (stopBeforeStep > 0 && !dryRun && captureDir == "") {
+				return fmt.Errorf("--stop-before-step requires a positive step and --capture-to for live runs")
+			}
 
 			supplied, err := parseDynamicInputs(m, os.Args[1:])
 			if err != nil {
@@ -156,6 +161,7 @@ func newRecipeRunCmd() *cobra.Command {
 				cookbook.WithRecipeSlug(m.Slug),
 				cookbook.WithChain(m.Chain),
 				cookbook.WithStorageURL(cfg.EffectiveStorageURL()),
+				cookbook.WithStopBeforeStep(stopBeforeStep),
 			}
 			if dryRun {
 				ctxOpts = append(ctxOpts, cookbook.WithDryRun(true))
@@ -213,8 +219,9 @@ func newRecipeRunCmd() *cobra.Command {
 				mode = "dry-running"
 			}
 			Status("%s recipe %s — %d step%s", mode, m.Slug, len(m.Chain), plural(len(m.Chain)))
-			if err := r.Run(rctx); err != nil {
-				return &ExitError{Code: ExitGeneric, Err: err}
+			runErr := r.Run(rctx)
+			if runErr != nil && !errors.Is(runErr, cookbook.ErrCheckpoint) {
+				return &ExitError{Code: ExitGeneric, Err: runErr}
 			}
 			if estimate {
 				reservation, actual, unavailable := rctx.EstimateTotals()
@@ -233,6 +240,10 @@ func newRecipeRunCmd() *cobra.Command {
 					fmt.Fprintln(os.Stderr, line)
 				}
 			}
+			if errors.Is(runErr, cookbook.ErrCheckpoint) {
+				fmt.Fprintln(os.Stderr, "recipe paused before requested dispatch; review captures before resuming")
+				return nil
+			}
 			if final := rctx.FinalOutput(); final != "" {
 				if !dryRun {
 					if err := rctx.CaptureFinal(final); err != nil {
@@ -248,6 +259,8 @@ func newRecipeRunCmd() *cobra.Command {
 		"directory where Capture writes per-step artifacts and the final hero output")
 	c.Flags().BoolVar(&resume, "resume", false,
 		"reuse step outputs recorded in <capture-to>/state.json from a prior run; only steps not yet recorded are dispatched")
+	c.Flags().IntVar(&stopBeforeStep, "stop-before-step", 0,
+		"pause before this numbered pipeline call; inspect captures, then continue with --resume")
 	c.Flags().BoolVar(&dryRun, "dry-run", false,
 		"resolve inputs and log the chain that would run, but skip dispatch (no credits charged, no auth required)")
 	c.Flags().BoolVar(&estimate, "estimate", false,

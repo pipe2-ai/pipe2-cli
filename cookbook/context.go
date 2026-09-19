@@ -2,6 +2,7 @@ package cookbook
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -122,7 +123,8 @@ type Context struct {
 	// step outputs. RunPipeline checks against this before dispatching
 	// and short-circuits with the cached Result when the slug at the
 	// current stepCounter matches.
-	resumeState *ResumeState
+	resumeState    *ResumeState
+	stopBeforeStep int
 
 	// stateFile is the absolute path to <captureDir>/state.json. Empty
 	// when captureDir is empty (no state to persist).
@@ -187,11 +189,12 @@ type ResumeState struct {
 // runs the same step Idx, so keying on Idx alone made every branch reuse the
 // first branch's run on --resume (and clobber each other's state.json entry).
 type ResumeStep struct {
-	Idx      int            `json:"idx"`
-	Substep  string         `json:"substep,omitempty"`
-	Pipeline string         `json:"pipeline"`
-	RunID    string         `json:"run_id"`
-	Output   map[string]any `json:"output"`
+	Idx         int            `json:"idx"`
+	Substep     string         `json:"substep,omitempty"`
+	Pipeline    string         `json:"pipeline"`
+	RunID       string         `json:"run_id"`
+	Output      map[string]any `json:"output"`
+	InputSHA256 string         `json:"input_sha256,omitempty"`
 }
 
 // NewContext constructs a Context from validated inputs and a live
@@ -255,6 +258,14 @@ func WithSourceFetchOptions(opts SourceFetchOptions) ContextOption {
 // exists on disk (the runner writes the new file from scratch).
 func WithResume(state *ResumeState) ContextOption {
 	return func(c *Context) { c.resumeState = state }
+}
+
+// ErrCheckpoint means the requested dispatch boundary was reached without spending.
+var ErrCheckpoint = errors.New("recipe checkpoint reached")
+
+// WithStopBeforeStep pauses before the numbered dispatch, including in dry runs.
+func WithStopBeforeStep(step int) ContextOption {
+	return func(c *Context) { c.stopBeforeStep = step }
 }
 
 // WithRecipeSlug stamps the recipe slug into state.json so resume can
@@ -452,6 +463,17 @@ func (c *Context) RunPipeline(slug string, inputs Inputs, opts ...RunOption) (*R
 
 	c.stepCounter++
 	stepIdx := c.stepCounter
+	if c.stopBeforeStep > 0 && stepIdx >= c.stopBeforeStep {
+		return nil, ErrCheckpoint
+	}
+	if c.stopBeforeStep > 0 && len(c.chain) > 0 && (stepIdx > len(c.chain) || c.chain[stepIdx-1].Pipeline != slug || c.substepPrefix != "") {
+		return nil, fmt.Errorf("checkpoint requires pipeline calls to match the linear manifest")
+	}
+	raw, err := json.Marshal(inputs)
+	if err != nil {
+		return nil, fmt.Errorf("%s: marshal inputs: %w", slug, err)
+	}
+	inputHash := fmt.Sprintf("%x", sha256.Sum256(raw))
 
 	// Resume short-circuit: if we have prior state and the current
 	// step+slug match a recorded entry, skip dispatch entirely and
@@ -463,6 +485,9 @@ func (c *Context) RunPipeline(slug string, inputs Inputs, opts ...RunOption) (*R
 			// Key on (Idx, Substep): fan-out branches share an Idx, so the
 			// substep prefix is what distinguishes clip 1's step from clip 2's.
 			if s.Idx == stepIdx && s.Substep == c.substepPrefix {
+				if s.InputSHA256 != "" && s.InputSHA256 != inputHash {
+					return nil, fmt.Errorf("%s: resumed inputs changed; review a fresh capture before continuing", slug)
+				}
 				if s.Pipeline != slug {
 					c.Logf("↻ %s slug changed (%s → %s); running live, state.json will be rewritten",
 						c.stepHeader(stepIdx, slug, opt.whatItDoes), s.Pipeline, slug)
@@ -516,10 +541,6 @@ func (c *Context) RunPipeline(slug string, inputs Inputs, opts ...RunOption) (*R
 	c.Logf("▸ %s%s — dispatching",
 		c.stepHeader(stepIdx, slug, opt.whatItDoes),
 		formatEstimateSuffix(stepEstimate))
-	raw, err := json.Marshal(inputs)
-	if err != nil {
-		return nil, fmt.Errorf("%s: marshal inputs: %w", slug, err)
-	}
 	runID, err := c.client.RunPipeline(c.ctx, slug, raw)
 	if err != nil {
 		return nil, fmt.Errorf("%s: dispatch: %w", slug, err)
@@ -547,7 +568,7 @@ func (c *Context) RunPipeline(slug string, inputs Inputs, opts ...RunOption) (*R
 	// Persist the step output to state.json so a subsequent --resume
 	// run can pick up here. Best-effort; a write failure is logged but
 	// doesn't fail the pipeline.
-	if err := c.recordStep(stepIdx, c.substepPrefix, slug, runID, row.Output); err != nil {
+	if err := c.recordStep(stepIdx, c.substepPrefix, slug, runID, row.Output, inputHash); err != nil {
 		c.Logf("  (state.json write failed: %v — resume won't work for this run)", err)
 	}
 
@@ -561,7 +582,7 @@ func (c *Context) RunPipeline(slug string, inputs Inputs, opts ...RunOption) (*R
 // substep is the fan-out branch prefix (empty for the main chain); it is part
 // of the upsert key so parallel branches don't clobber each other's entry.
 // The stateMu serialises the load→upsert→write across those parallel branches.
-func (c *Context) recordStep(idx int, substep, slug, runID string, output map[string]any) error {
+func (c *Context) recordStep(idx int, substep, slug, runID string, output map[string]any, inputHash ...string) error {
 	if c.stateFile == "" {
 		return nil
 	}
@@ -580,6 +601,9 @@ func (c *Context) recordStep(idx int, substep, slug, runID string, output map[st
 		}
 	}
 	entry := ResumeStep{Idx: idx, Substep: substep, Pipeline: slug, RunID: runID, Output: output}
+	if len(inputHash) > 0 {
+		entry.InputSHA256 = inputHash[0]
+	}
 	found := false
 	for i, s := range state.Steps {
 		if s.Idx == idx && s.Substep == substep {
