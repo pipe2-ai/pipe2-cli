@@ -185,7 +185,7 @@ func pluralS(n int) string {
 
 // pkgDirName converts a kebab-case slug to a snake_case directory
 // name matching the Go package convention (Go forbids hyphens in
-// package names). e.g. "clip-factory" → "clip_factory".
+// package names). e.g. "video-trim" → "video_trim".
 func pkgDirName(slug string) string {
 	out := make([]byte, len(slug))
 	for i := 0; i < len(slug); i++ {

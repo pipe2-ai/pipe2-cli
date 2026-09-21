@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -29,6 +30,29 @@ func (m *fanoutMock) UploadAsset(_ context.Context, p string) (string, error) {
 }
 func (m *fanoutMock) EstimatePipelineCost(_ context.Context, _ string, _ json.RawMessage) (*PipelineCostEstimate, error) {
 	return nil, nil
+}
+
+type failFirstMock struct{ fanoutMock }
+
+func (m *failFirstMock) WaitRun(_ context.Context, runID string, _ time.Duration) (*RunRow, error) {
+	if strings.HasSuffix(runID, "-1") {
+		return &RunRow{ID: runID, Status: "failed", ErrorMessage: "transient"}, nil
+	}
+	return &RunRow{ID: runID, Status: "completed", Output: map[string]any{"url": "https://cdn.test/ready.mp4"}}, nil
+}
+
+func TestRunPipelineRetriesTerminalFailureAtSameStep(t *testing.T) {
+	dir := t.TempDir()
+	mc := &failFirstMock{}
+	c := NewContext(context.Background(), mc, nil, WithCaptureDir(dir))
+	result, err := c.RunPipeline("video-reframe", Inputs{"clip": 1}, WithRetries(1))
+	if err != nil || result.RunID != "run-video-reframe-2" || mc.dispatches.Load() != 2 {
+		t.Fatalf("result=%+v dispatches=%d error=%v", result, mc.dispatches.Load(), err)
+	}
+	state := readState(t, filepath.Join(dir, "state.json"))
+	if len(state.Steps) != 1 || state.Steps[0].Idx != 1 || state.Steps[0].RunID != result.RunID {
+		t.Fatalf("retry was not recorded as one completed step: %+v", state.Steps)
+	}
 }
 
 // runBranches simulates a fan-out: two Substep branches each running the SAME
@@ -55,7 +79,7 @@ func TestResumeFanoutKeying(t *testing.T) {
 	dir := t.TempDir()
 	mc := &fanoutMock{}
 	c := NewContext(context.Background(), mc, map[string]any{},
-		WithCaptureDir(dir), WithRecipeSlug("clip-factory"))
+		WithCaptureDir(dir), WithRecipeSlug("question-to-reel"))
 
 	first := runBranches(t, c)
 	if first["substep-1"] == "" || first["substep-1"] == first["substep-2"] {
@@ -79,7 +103,7 @@ func TestResumeFanoutKeying(t *testing.T) {
 	// Resume: each branch reuses ITS OWN run; nothing new is dispatched.
 	mc2 := &fanoutMock{}
 	rc := NewContext(context.Background(), mc2, map[string]any{},
-		WithCaptureDir(dir), WithRecipeSlug("clip-factory"), WithResume(state))
+		WithCaptureDir(dir), WithRecipeSlug("question-to-reel"), WithResume(state))
 	second := runBranches(t, rc)
 	if n := mc2.dispatches.Load(); n != 0 {
 		t.Errorf("resume should dispatch no new runs, dispatched %d", n)
@@ -101,7 +125,7 @@ func TestRecordStepConcurrentFanout(t *testing.T) {
 	dir := t.TempDir()
 	mc := &fanoutMock{}
 	c := NewContext(context.Background(), mc, map[string]any{},
-		WithCaptureDir(dir), WithRecipeSlug("clip-factory"))
+		WithCaptureDir(dir), WithRecipeSlug("question-to-reel"))
 
 	var wg sync.WaitGroup
 	for i := 1; i <= branches; i++ {

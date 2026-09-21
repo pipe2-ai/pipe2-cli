@@ -1,31 +1,6 @@
 {
-  "generated_at": "2026-09-06T00:00:00Z",
+  "generated_at": "2026-09-21T00:00:00Z",
   "recipes": [
-    {
-      "slug": "clip-factory",
-      "title": "Long video → multiple captioned clips, in one command",
-      "description": "Slice any long video into N captioned shorter clips. Transcribe once, auto-pick the moments with AI, trim + caption each in parallel. Optionally reformat to vertical (9:16) for TikTok / Reels / Shorts, square (1:1) for Instagram, or portrait (4:5); the caption anchor auto-adjusts.",
-      "category": "tutorial",
-      "tags": [
-        "cli",
-        "claude-code",
-        "captions",
-        "transcription",
-        "highlights",
-        "video-trim",
-        "video-reframe",
-        "shorts",
-        "vertical-video",
-        "tiktok",
-        "reels",
-        "instagram",
-        "youtube-shorts",
-        "agent-loop"
-      ],
-      "schema_version": 1,
-      "chain_length": 6,
-      "updatedAt": "2026-05-20"
-    },
     {
       "slug": "dance-reel",
       "title": "One prompt → a vertical AI dance reel",
@@ -60,6 +35,24 @@
       "schema_version": 1,
       "chain_length": 3,
       "updatedAt": "2026-09-06"
+    },
+    {
+      "slug": "long-video-to-shorts",
+      "title": "Long video → captioned Shorts",
+      "description": "Give AI a long video and an editorial brief, then get a pack of selected, reframed, and captioned social clips.",
+      "category": "tutorial",
+      "tags": [
+        "highlights",
+        "video-trim",
+        "video-reframe",
+        "captions",
+        "shorts",
+        "vertical-video",
+        "podcast"
+      ],
+      "schema_version": 1,
+      "chain_length": 5,
+      "updatedAt": "2026-09-21"
     },
     {
       "slug": "product-world-tour",

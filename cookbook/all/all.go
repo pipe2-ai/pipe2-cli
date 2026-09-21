@@ -13,9 +13,9 @@
 package all
 
 import (
-	_ "github.com/pipe2-ai/pipe2-cli/cookbook/clip_factory"
 	_ "github.com/pipe2-ai/pipe2-cli/cookbook/dance_reel"
 	_ "github.com/pipe2-ai/pipe2-cli/cookbook/hidden_world_reveal"
+	_ "github.com/pipe2-ai/pipe2-cli/cookbook/long_video_to_shorts"
 	_ "github.com/pipe2-ai/pipe2-cli/cookbook/product_world_tour"
 	_ "github.com/pipe2-ai/pipe2-cli/cookbook/question_to_reel"
 	_ "github.com/pipe2-ai/pipe2-cli/cookbook/tactile_motion_study"

@@ -58,10 +58,10 @@ command runs a whole chain (e.g. long-form video → captioned shorts).
 
 ```bash
 pipe2 recipe list                       # recipes shipped in this binary
-pipe2 recipe info clip-factory          # manifest: chain, inputs, samples
-pipe2 recipe run clip-factory --input ./talk.mp4 --reformat 9:16
-pipe2 recipe run clip-factory --input https://youtube.com/watch?v=… --highlights-count 3
-pipe2 recipe run clip-factory --input ./talk.mp4 --dry-run --estimate
+pipe2 recipe info dance-reel            # manifest: chain, inputs, samples
+pipe2 recipe run dance-reel --subject "breakdancer"
+pipe2 recipe run question-to-reel --question "Why don't clouds fall?"
+pipe2 recipe run dance-reel --dry-run --estimate
 ```
 
 ### Source media (`--input`)

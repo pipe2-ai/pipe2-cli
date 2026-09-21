@@ -27,7 +27,7 @@ A run started with --capture-to <dir> writes a state.json recording
 each step's pipeline, run id, and output. download reads that file and
 fetches every step's artifact:
 
-  pipe2 recipe run clip-factory --input clip.mp4 --capture-to ./out
+  pipe2 recipe run dance-reel --capture-to ./out
   pipe2 recipe download --from ./out
 
 Files land as step-<n>-<pipeline>.<ext>. Use --to to write elsewhere.

@@ -153,9 +153,6 @@
   "intro_voiceover": "AI dance videos often lose recognizable moves when the model has to guess the choreography. Give it a labeled movement grid as a visual storyboard instead, then generate the dance against the finished soundtrack. This recipe combines the grid reveal, the dance, and the matching music into one reel.",
   "published_at": "2026-05-11",
   "schema_version": 1,
-  "see_also": [
-    "clip-factory"
-  ],
   "slug": "dance-reel",
   "tags": [
     "cli",

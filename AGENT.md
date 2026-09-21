@@ -425,9 +425,9 @@ pipelines. They ship with the CLI binary.
 
 Examples:
   pipe2 recipe list
-  pipe2 recipe info clip-factory
-  pipe2 recipe run clip-factory --input https://example.com/talk.mp4 --reformat 9:16
-  pipe2 recipe run clip-factory --input ./my-clip.mp4 --highlights-count 3 --preset karaoke-gradient
+  pipe2 recipe info dance-reel
+  pipe2 recipe run dance-reel --subject "breakdancer"
+  pipe2 recipe run question-to-reel --question "Why don't clouds fall?"
 
 ```
 pipe2 recipe
@@ -445,7 +445,7 @@ A run started with --capture-to <dir> writes a state.json recording
 each step's pipeline, run id, and output. download reads that file and
 fetches every step's artifact:
 
-  pipe2 recipe run clip-factory --input clip.mp4 --capture-to ./out
+  pipe2 recipe run dance-reel --capture-to ./out
   pipe2 recipe download --from ./out
 
 Files land as step-<n>-<pipeline>.<ext>. Use --to to write elsewhere.

@@ -1,0 +1,147 @@
+{
+  "agent_prompt": "Run the long-video-to-shorts recipe with the pipe2 CLI. Pass the source with --input and describe the moments to select with --instructions. Use --max-clips, --max-seconds, --aspect, and --preset when the user specifies them. Report the returned JSON array of captioned clip URLs.",
+  "audience": [
+    "creator",
+    "podcaster",
+    "agency editor",
+    "social team"
+  ],
+  "category": "tutorial",
+  "chain": [
+    {
+      "pipeline": "transcription",
+      "what_it_does": "Creates the timestamped speech map Video Trim uses to keep every selected idea complete.",
+      "artifact_kind": "text"
+    },
+    {
+      "pipeline": "video-trim",
+      "what_it_does": "Reviews the complete source, selects the strongest moments from the editorial brief, and returns separate clips.",
+      "artifact_kind": "video"
+    },
+    {
+      "pipeline": "video-reframe",
+      "what_it_does": "Reframes every selected clip to the chosen social aspect ratio while keeping speakers and important content visible.",
+      "artifact_kind": "video"
+    },
+    {
+      "pipeline": "transcription",
+      "what_it_does": "Transcribes each reframed clip so its captions match the final edit and timing.",
+      "artifact_kind": "text"
+    },
+    {
+      "pipeline": "captions",
+      "what_it_does": "Burns the matching transcript into every clip with the selected style and position.",
+      "artifact_kind": "video"
+    }
+  ],
+  "description": "Give AI a long video and an editorial brief, then get a pack of selected, reframed, and captioned social clips.",
+  "example_command": "pipe2 recipe run long-video-to-shorts --input https://www.youtube.com/watch?v=4uzGDAoNOZc",
+  "inputs": {
+    "aspect_ratio": {
+      "type": "enum",
+      "default": "9:16",
+      "values": [
+        "9:16",
+        "1:1",
+        "4:5",
+        "16:9"
+      ],
+      "cli_arg": "--aspect",
+      "description": "Output aspect ratio for every clip."
+    },
+    "corrections": {
+      "type": "string",
+      "default": "",
+      "cli_arg": "--corrections",
+      "description": "Optional comma-separated word corrections in the form from=to,from=to."
+    },
+    "instructions": {
+      "type": "string",
+      "default": "Find the five strongest self-contained moments. Prefer clear ideas, surprising claims, useful explanations, or complete stories. Each clip should make sense without the rest of the video.",
+      "cli_arg": "--instructions",
+      "description": "Editorial brief describing which moments to select and what makes a good clip."
+    },
+    "language": {
+      "type": "string",
+      "default": "auto",
+      "cli_arg": "--lang",
+      "description": "ISO 639-1 transcription language, or auto."
+    },
+    "max_clip_duration_sec": {
+      "type": "int",
+      "default": 45,
+      "min": 1,
+      "max": 120,
+      "cli_arg": "--max-seconds",
+      "description": "Maximum duration of each selected clip, in seconds."
+    },
+    "max_clips": {
+      "type": "int",
+      "default": 5,
+      "min": 1,
+      "max": 10,
+      "cli_arg": "--max-clips",
+      "description": "Maximum number of clips Video Trim may return."
+    },
+    "parallelism": {
+      "type": "int",
+      "default": 4,
+      "min": 1,
+      "max": 10,
+      "cli_arg": "--parallel",
+      "description": "Maximum number of selected clips processed in parallel."
+    },
+    "position": {
+      "type": "enum",
+      "default": "auto",
+      "values": [
+        "auto",
+        "top",
+        "middle",
+        "bottom"
+      ],
+      "cli_arg": "--position",
+      "description": "Caption position. Auto keeps text away from the main subject when possible."
+    },
+    "preset": {
+      "type": "enum",
+      "default": "serif-editorial",
+      "values": [
+        "tiktok-bold-yellow",
+        "minimal-white",
+        "subtle-drop",
+        "karaoke-gradient",
+        "big-serif",
+        "serif-editorial"
+      ],
+      "cli_arg": "--preset",
+      "description": "Caption style used for every clip."
+    },
+    "source": {
+      "type": "asset_url",
+      "required": true,
+      "cli_arg": "--input",
+      "description": "Source video: a YouTube or social URL, direct media URL, local file, or existing Pipe2 asset."
+    }
+  },
+  "intro_voiceover": "The recipe builds a timestamped source transcript, then Video Trim reviews the complete recording and chooses clean moments. Each result is reframed, transcribed to its final timing, and captioned as its own shareable clip.",
+  "published_at": "2026-09-20",
+  "schema_version": 1,
+  "slug": "long-video-to-shorts",
+  "source_video": {
+    "url": "https://www.youtube.com/watch?v=4uzGDAoNOZc",
+    "title": "OpenClaw Creator: Why 80% Of Apps Will Disappear",
+    "note": "The sample gallery was produced by this recipe from the credited OpenClaw interview."
+  },
+  "tags": [
+    "highlights",
+    "video-trim",
+    "video-reframe",
+    "captions",
+    "shorts",
+    "vertical-video",
+    "podcast"
+  ],
+  "title": "Long video → captioned Shorts",
+  "updated_at": "2026-09-21"
+}

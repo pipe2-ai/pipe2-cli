@@ -31,7 +31,7 @@ func (*Recipe) Manifest() cookbook.Manifest {
 		Description:    "Turn your approved answer and visual beats into a narrated vertical explainer with stock footage, timed diagrams, and synchronized captions.",
 		IntroVoiceover: "Show the answer, not just the words. Supply the facts and visual beats; narration, stock footage, moving diagrams and captions turn them into an explainer you can reuse across your channels.",
 		Category:       "tutorial", Tags: []string{"questions", "explainer", "b-roll", "captions", "vertical-video"}, Audience: []string{"creator", "educator", "social team"},
-		PublishedAt: "2026-09-06", UpdatedAt: "2026-09-06", SeeAlso: []string{"clip-factory"},
+		PublishedAt: "2026-09-06", UpdatedAt: "2026-09-06",
 		Inputs: []cookbook.Input{
 			{Name: "question", Type: cookbook.String, Default: defaultQuestion, Description: "Audience question, read aloud and shown on screen. Maximum 80 characters."},
 			{Name: "answer", Type: cookbook.String, Default: defaultAnswer, Description: "Your fact-checked answer. Keep question plus answer between 20 and 60 words."},

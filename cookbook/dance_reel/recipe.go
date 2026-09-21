@@ -32,7 +32,6 @@ func (r *Recipe) Manifest() cookbook.Manifest {
 		Category:       "tutorial",
 		Tags:           []string{"cli", "claude-code", "pipelines", "dance", "seedance", "gpt-image-2", "reel", "automation"},
 		Audience:       []string{"creator", "agency editor", "AI agent", "marketer"},
-		SeeAlso:        []string{"clip-factory"},
 		PublishedAt:    "2026-05-11",
 		UpdatedAt:      "2026-05-11",
 		Inputs: append([]cookbook.Input{

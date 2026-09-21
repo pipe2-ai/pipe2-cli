@@ -72,9 +72,6 @@
   "intro_voiceover": "Show the answer, not just the words. Supply the facts and visual beats; narration, stock footage, moving diagrams and captions turn them into an explainer you can reuse across your channels.",
   "published_at": "2026-09-06",
   "schema_version": 1,
-  "see_also": [
-    "clip-factory"
-  ],
   "slug": "question-to-reel",
   "tags": [
     "questions",

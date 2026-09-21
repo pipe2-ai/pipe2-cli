@@ -59,7 +59,7 @@ type RunRow struct {
 // Context is what each Recipe.Run receives. Provides typed input
 // access, pipeline invocation, output capture, and progress logging.
 // Substep returns a child Context for fan-out (e.g. one per moment
-// in podcast-clip-factory), giving each branch its own capture
+// in a multi-clip recipe), giving each branch its own capture
 // numbering and log prefix.
 type Context struct {
 	ctx    context.Context
@@ -435,7 +435,7 @@ func (c *Context) WithContext(ctx context.Context) *Context {
 
 // Substep returns a child Context for one branch of fan-out work.
 // Steps captured via the child are written as step-<N>-<n>.<ext>
-// (parent step, child index). Useful for podcast-clip-factory style
+// (parent step, child index). Useful for fan-out recipe style
 // recipes where the same chain runs N times in parallel.
 func (c *Context) Substep(n int) *Context {
 	child := *c
@@ -538,25 +538,32 @@ func (c *Context) RunPipeline(slug string, inputs Inputs, opts ...RunOption) (*R
 		}, nil
 	}
 
-	c.Logf("▸ %s%s — dispatching",
-		c.stepHeader(stepIdx, slug, opt.whatItDoes),
-		formatEstimateSuffix(stepEstimate))
-	runID, err := c.client.RunPipeline(c.ctx, slug, raw)
-	if err != nil {
-		return nil, fmt.Errorf("%s: dispatch: %w", slug, err)
-	}
-	c.Logf("  run %s — waiting", runID)
-
-	row, err := c.client.WaitRun(c.ctx, runID, opt.timeout)
-	if err != nil {
-		return nil, fmt.Errorf("%s: wait run %s: %w", slug, runID, err)
-	}
-	if row.Status != "completed" {
+	var runID string
+	var row *RunRow
+	for attempt := 0; ; attempt++ {
+		c.Logf("▸ %s%s — dispatching",
+			c.stepHeader(stepIdx, slug, opt.whatItDoes),
+			formatEstimateSuffix(stepEstimate))
+		runID, err = c.client.RunPipeline(c.ctx, slug, raw)
+		if err != nil {
+			return nil, fmt.Errorf("%s: dispatch: %w", slug, err)
+		}
+		c.Logf("  run %s — waiting", runID)
+		row, err = c.client.WaitRun(c.ctx, runID, opt.timeout)
+		if err != nil {
+			return nil, fmt.Errorf("%s: wait run %s: %w", slug, runID, err)
+		}
+		if row.Status == "completed" {
+			break
+		}
 		msg := row.ErrorMessage
 		if msg == "" {
 			msg = "no error message"
 		}
-		return nil, &RunError{Pipeline: slug, RunID: runID, Status: row.Status, Message: msg}
+		if row.Status != "failed" || attempt >= opt.retries {
+			return nil, &RunError{Pipeline: slug, RunID: runID, Status: row.Status, Message: msg}
+		}
+		c.Logf("  ↻ %s failed; retrying once", slug)
 	}
 	credSuffix := ""
 	if row.CreditsCharged != nil {
@@ -658,12 +665,17 @@ type RunOption func(*runOpts)
 type runOpts struct {
 	timeout    time.Duration
 	whatItDoes string
+	retries    int
 }
 
 // WithStepTimeout overrides the default 15-min wait timeout for one
 // step. Useful for long pipelines (e.g. transcription on a 60-min
 // episode).
 func WithStepTimeout(d time.Duration) RunOption { return func(o *runOpts) { o.timeout = d } }
+
+// WithRetries repeats a terminally failed run. Dispatch and wait errors are
+// not retried because the server may still be processing a charged run.
+func WithRetries(n int) RunOption { return func(o *runOpts) { o.retries = max(0, n) } }
 
 // WithWhatItDoes labels a conditional or repeated RunPipeline call
 // for the runtime logger. By default RunPipeline looks up the slug in
