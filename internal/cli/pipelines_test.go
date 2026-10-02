@@ -99,6 +99,54 @@ func TestPipelinesGetRequiresOneSlug(t *testing.T) {
 	}
 }
 
+func TestPipelinesModelsReturnsAttachedSchemas(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct {
+			OperationName string            `json:"operationName"`
+			Variables     map[string]string `json:"variables"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Error(err)
+		}
+		if request.OperationName != "PipelineModels" || request.Variables["slug"] != "audio-generator" {
+			t.Errorf("unexpected pipeline models request: %#v", request)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": pipe2.PipelineModelsResponse{Pipeline_models: []pipe2.PipelineModelsPipeline_models{
+			{
+				Model_slug:   "voice-a",
+				Input_schema: json.RawMessage(`{"type":"object","properties":{"voice":{"enum":["female"]}}}`),
+				Model:        pipe2.PipelineModelsPipeline_modelsModelModels{Slug: "voice-a", Label: "Voice A", Provider: "test"},
+			},
+		}}})
+	}))
+	defer server.Close()
+	t.Setenv("PIPE2_API_URL", server.URL)
+	t.Setenv("PIPE2_TOKEN", "fixture-token")
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+
+	data, err := executePipelineModelsForTest(t, "audio-generator")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []pipe2.PipelineModelsPipeline_models
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].Model_slug != "voice-a" || got[0].Model.Slug != "voice-a" || len(got[0].Input_schema) == 0 {
+		t.Fatalf("pipeline models = %#v", got)
+	}
+}
+
+func TestPipelinesModelsRequiresOneSlug(t *testing.T) {
+	for _, args := range [][]string{nil, {"first", "second"}} {
+		_, err := executePipelineModelsForTest(t, args...)
+		if err == nil || ExitCodeFor(err) != ExitUsage {
+			t.Fatalf("args=%v error=%v, want usage error", args, err)
+		}
+	}
+}
+
 func executePipelineGetForTest(t *testing.T, args ...string) ([]byte, error) {
 	t.Helper()
 	previousFlags, previousStdout := Globals, os.Stdout
@@ -112,6 +160,30 @@ func executePipelineGetForTest(t *testing.T, args ...string) ([]byte, error) {
 	root := NewRootCmd("test")
 	root.SilenceErrors = true
 	root.SetArgs(append([]string{"pipelines", "get", "--json"}, args...))
+	runErr := root.Execute()
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		t.Fatal(err)
+	}
+	data, err := io.ReadAll(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data, runErr
+}
+
+func executePipelineModelsForTest(t *testing.T, args ...string) ([]byte, error) {
+	t.Helper()
+	previousFlags, previousStdout := Globals, os.Stdout
+	Globals = &GlobalFlags{}
+	file, err := os.CreateTemp(t.TempDir(), "stdout")
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.Stdout = file
+	defer func() { Globals, os.Stdout = previousFlags, previousStdout; _ = file.Close() }()
+	root := NewRootCmd("test")
+	root.SilenceErrors = true
+	root.SetArgs(append([]string{"pipelines", "models", "--json"}, args...))
 	runErr := root.Execute()
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
 		t.Fatal(err)

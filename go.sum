@@ -32,8 +32,8 @@ github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/lrstanley/go-ytdlp v1.3.5 h1:eT+29mK3Lp+XPMQOH25+jVerrrjifYW1o3IkTYJ9SMs=
 github.com/lrstanley/go-ytdlp v1.3.5/go.mod h1:VgjnTrvkTf+23JuySjyPq1iQ8ijSovBtTPpXH5XrLtI=
-github.com/pipe2-ai/sdk-go v0.6.2 h1:beHBQj4f/XS0wL/507QS3VkQHZLcTonwATVo4oHrMI0=
-github.com/pipe2-ai/sdk-go v0.6.2/go.mod h1:o4c0jn67uOxfMLkZZ6yfkEtKZVZg5jw3fw5hxnd0L5Q=
+github.com/pipe2-ai/sdk-go v0.6.3 h1:yaqNAt6oit5ryoOYT0CFKF2lC2QPS++xxw7Cmy85Ah4=
+github.com/pipe2-ai/sdk-go v0.6.3/go.mod h1:o4c0jn67uOxfMLkZZ6yfkEtKZVZg5jw3fw5hxnd0L5Q=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=

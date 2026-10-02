@@ -18,7 +18,7 @@ func newPipelinesCmd() *cobra.Command {
 		Aliases: []string{"pipeline"},
 		Short:   "List, inspect, estimate, and run Pipe2.ai pipelines",
 	}
-	c.AddCommand(newPipelinesListCmd(), newPipelinesGetCmd(), newPipelinesEstimateCmd(), newPipelinesRunCmd())
+	c.AddCommand(newPipelinesListCmd(), newPipelinesGetCmd(), newPipelinesModelsCmd(), newPipelinesEstimateCmd(), newPipelinesRunCmd())
 	return c
 }
 
@@ -75,6 +75,34 @@ func newPipelinesGetCmd() *cobra.Command {
 				return &ExitError{Code: ExitNotFound, Err: fmt.Errorf("pipeline %s not found", args[0])}
 			}
 			return Out(resp.Pipelines[0])
+		},
+	}
+}
+
+func newPipelinesModelsCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "models <pipeline-slug>",
+		Short: "List models and input schemas attached to a pipeline",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+				return &ExitError{Code: ExitUsage, Err: err}
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := MustClient()
+			if err != nil {
+				return err
+			}
+			resp, err := pipe2.PipelineModels(cmd.Context(), client, args[0])
+			if err != nil {
+				return classifyAPIError(err)
+			}
+			models := resp.Pipeline_models
+			if models == nil {
+				models = []pipe2.PipelineModelsPipeline_models{}
+			}
+			return Out(models)
 		},
 	}
 }

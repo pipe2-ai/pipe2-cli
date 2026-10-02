@@ -42,7 +42,9 @@ in the fields described by that schema. Choose whether the pipeline is useful
 and select its parameters from the task and current schema; do not assume a
 particular transcription provider, model or special input shape.
 
-Child pipeline charges count toward the parent run's displayed maximum.
+Each child pipeline has its own run and credit charge. In an agent workspace,
+child runs also have a separate total allowance; check the live estimate before
+dispatching one.
 The real pipeline output and its asset records appear in `final`. After the
 command completes, its output assets are available locally in
 `pipeline-runs/<run_id>/assets/<asset_id>`. Read
@@ -93,6 +95,12 @@ pipe2 pipelines list --page 1 --limit 20 --json \
 # 2. Inspect the full record for the approved pipeline you picked:
 pipe2 pipelines get video-generator --json > pipeline.json
 jq '.input_schema' pipeline.json
+pipe2 pipelines models video-generator --json > models.json
+
+# Each row includes the model-specific input_schema and public model metadata.
+# Choose only from models attached to this pipeline. Combine the chosen model
+# schema with the common pipeline schema; never borrow voice IDs or other
+# model-specific fields from a different model.
 
 #    This record includes output_schema, models, hints, and ui_schema.
 #    Use `pipelines estimate` with your input for a credit estimate.
@@ -113,6 +121,11 @@ timed out, even with `--json`.
   or receive fewer rows than `--limit`.
 - To send a large payload, write it to a file and pass `--input ./in.json`
   (or pipe stdin with `--input -`).
+- pipe2 pipelines models <slug> --json lists the models attached to that
+  pipeline, with per-model schemas and public metadata such as descriptions,
+  provider, capabilities, and quality score when available. The model schema
+  is authoritative for model-specific fields; the pipeline schema remains
+  authoritative for shared fields.
 - Validate your payload against `input_schema` locally (e.g. with `ajv`,
   `jsonschema`, or any JSON Schema validator) before dispatching. The
   server will reject invalid inputs with exit code 2, but local validation
@@ -388,6 +401,16 @@ pipe2 pipelines list [flags]
 
 - `--limit` (`int`) default `20` — number of pipelines per page
 - `--page` (`int`) default `1` — page number (1-based)
+
+### `pipe2 pipelines models`
+
+<!-- anchor: pipe2-pipelines-models -->
+
+List models and input schemas attached to a pipeline
+
+```
+pipe2 pipelines models <pipeline-slug>
+```
 
 ### `pipe2 pipelines run`
 
